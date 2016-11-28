@@ -1,100 +1,136 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.Net;
-import com.badlogic.gdx.graphics.Cursor;
-import com.esotericsoftware.kryonet.Connection;
-import com.esotericsoftware.kryonet.Listener;
+import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryonet.Server;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
  * Created by Administrator on 10-Nov-16.
  */
-public class MyServer extends Thread implements GameClient {
-    Server server;
+public class MyServer implements GameClient {
+
     ServerSocket serverSocket;
-    Character character, otherCharacter;
+    static Socket socket;
+    GameListener callback;
+    String localAddress;
 
-    final int port = 45351;
-
-    public MyServer() {
-//        server = new Server();
-//        character = new Character();
-//        otherCharacter = new Character();
-//
-//        Network.register(server);
-//
-//        server.addListener(new Listener() {
-//
-//            @Override
-//            public void connected(Connection connection) {
-//                MainMenuScreen.debugText = "Connected: " + connection.toString();
-//            }
-//
-//            @Override
-//            public void disconnected(Connection connection) {
-//                MainMenuScreen.debugText = "Disconnected: " + connection.toString();
-//            }
-//
-//            @Override
-//            public void received(Connection connection, Object object) {
-//                otherCharacter = (Character) object;
-//                MainMenuScreen.debugText = "Updated";
-//            }
-//
-//            @Override
-//            public void idle(Connection connection) {
-//                MainMenuScreen.debugText = "Idle: " + connection.toString();
-//            }
-//        });
-//
-////        try {
-//            server.bind(Network.port);
-////        } catch(Exception e) {
-////            MainMenuScreen.debugText = "Fuck you bitch nigga";
-////        }
-////        bind(Network.port);
-//        server.start();
-//        System.out.println("Server opened: " + server.toString());
-//        MainMenuScreen.debugText = "Server opened: " + server.toString();
+    public MyServer(GameListener callback, String localAddress) {
+        this.callback = callback;
+        this.localAddress = localAddress;
     }
 
     @Override
     public void run() {
-        try {
-            MainMenuScreen.debugText = "Creating server on port no. " + port + "\n";
+        while (true) {
+            try {
+                MainMenuScreen.debugText = "Creating server on port no. " + GameClient.port + "\n";
 
-            ServerSocket server = new ServerSocket(port);
-            MainMenuScreen.debugText = "Created server on port no. " + port + "\n";
-            Socket socket = server.accept();
-            MainMenuScreen.debugText += "Connected to socket " + socket.getInetAddress();
+                ServerSocket server = new ServerSocket(GameClient.port);
+                MainMenuScreen.debugText = "Created server " + server.getLocalSocketAddress() + " on port no. " + GameClient.port + "\n";
+                socket = server.accept();
+                callback.onConnected();
+                MainMenuScreen.debugText = "Connected to socket " + socket.getInetAddress();
+
+                Thread t = new Thread(new ReceiveThread());
+                t.start();
+            } catch (IOException io) {
+                MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
+            }
+        }
+    }
+
+    @Override
+    public void onConnected(Socket s) {
+        callback.onConnected();
+    }
+
+    @Override
+    public void setListener(GameListener callback) {
+        this.callback = callback;
+    }
+
+    public boolean isConnected() {
+        return socket != null && socket.isConnected() && !socket.isClosed();
+    }
+
+    public String getLocalSubnet() {
+        String[] bytes = localAddress.split("\\.");
+
+        StringBuilder subnet = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            subnet.append(bytes[i] + ".");
+        }
+
+        return subnet.toString();
+    }
+
+    boolean sending = false;
+
+    @Override
+    public void sendMessage(String message) {
+//        Thread t = new Thread(new MessageThread(message));
+//        t.start();
+
+        if (!isConnected() || sending) return;
+
+        sending = true;
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            oos.writeUTF(message);
+            oos.flush();
+
+            MainMenuScreen.debugText = "Send message " + message;
         } catch (IOException io) {
-            MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
+            MainMenuScreen.debugText = "Unable to send message. " + io.getMessage();
+        }
+        sending = false;
+    }
+
+    private class MessageThread implements Runnable {
+
+        String message;
+
+        public MessageThread(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public void run() {
+            if (!isConnected()) return;
+
+            try {
+                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                oos.writeUTF(message);
+                oos.flush();
+
+                MainMenuScreen.debugText = "Send message: " + message;
+            } catch (IOException io) {
+                MainMenuScreen.debugText = "Unable to send message. " + io.getMessage();
+            }
         }
     }
 
-    public void bind(int port) {
-        try {
-            server.bind(port);
-//            MainMenuScreen.debugText = "Successfully bound to port no. " + server.getKryo().;
-        } catch (Exception e) {
-            MainMenuScreen.debugText = "Retrying with port no. " + (port + 1);
-            bind(++port);
+    private class ReceiveThread implements Runnable {
+        public void run() {
+            MainMenuScreen.debugText = "ReceiveThread running";
+            while (isConnected()) {
+                MainMenuScreen.debugText += "\nisConnected";
+                try {
+                    ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+                    String message = ois.readUTF();
+
+                    MainMenuScreen.debugText += "\nMessage received: " + message;
+                    callback.onMessageReceived(message);
+                } catch (IOException io) {
+                    MainMenuScreen.debugText += "\n" + io.getMessage();
+                    Gdx.app.log("mygdxgame", io.getMessage());
+                }
+            }
         }
     }
-
-    public void send(float x, float y) {
-        character.x = (int) x;
-        character.y = (int) y;
-        server.sendToAllTCP(character);
-    }
-
-    public Character getCharacter() {
-        return otherCharacter;
-    }
-
-    public boolean isConnected() { return server.getConnections().length > 0; }
 }

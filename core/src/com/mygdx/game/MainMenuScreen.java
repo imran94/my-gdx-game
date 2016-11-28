@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.esotericsoftware.kryonet.Server;
+import com.sun.org.apache.xpath.internal.operations.Mult;
 
 import org.w3c.dom.Text;
 
@@ -35,7 +36,7 @@ import java.util.Enumeration;
 /**
  * Created by Administrator on 07-Nov-16.
  */
-public class MainMenuScreen implements Screen {
+public class MainMenuScreen implements Screen, GameListener {
 
     Game game;
 
@@ -94,6 +95,7 @@ public class MainMenuScreen implements Screen {
         hideButtons = false;
 
         this.mController = mController;
+        debugText = mController.getIpAddress();
     }
 
     @Override
@@ -111,10 +113,8 @@ public class MainMenuScreen implements Screen {
             y1 = (int)touchpoint.y;
 
             if (gameClient != null && gameClient.isConnected()) {
-                gameClient.send(x1, y1);
-
-                x2 = gameClient.getCharacter().x;
-                y2 = gameClient.getCharacter().y;
+                debugText += "\nSending message";
+                gameClient.sendMessage(x1 + "," + y1);
             }
 
 //            touchpoint.x = guiCam.position.x - guiCam.viewportWidth + touchpoint.x;
@@ -150,7 +150,7 @@ public class MainMenuScreen implements Screen {
         drawCharacter(x2, y2);
 
         batch.begin();
-            font.draw(batch, debugText, guiCam.viewportWidth / 3, guiCam.viewportHeight - 10);
+            font.draw(batch, debugText, 0, guiCam.viewportHeight - 10);
         batch.end();
     }
 
@@ -167,19 +167,17 @@ public class MainMenuScreen implements Screen {
         shapeRenderer.end();
     }
 
-    int port = 45354;
-
     void createServer() {
-        Thread t = new MyServer();
+        gameClient = new MyServer(this, mController.getIpAddress());
+        Thread t = new Thread(gameClient);
         t.start();
     }
 
     void runClient() {
         debugText = "Starting up client thread";
-        for (int i = 0; i < 254; i++) {
-            Thread t = new MyClient(i);
-            t.start();
-        }
+        gameClient = new MyClient(this, mController.getIpAddress());
+        Thread t = new Thread(gameClient);
+        t.start();
     }
 
     @Override
@@ -228,4 +226,23 @@ public class MainMenuScreen implements Screen {
         textButtonStyle.font = skin.getFont("default");
         skin.add("default", textButtonStyle);
     }
+
+    @Override
+    public void onConnected() {
+        debugText = "Connected to socket";
+    }
+
+    @Override
+    public void onMessageReceived(String message) {
+        debugText = "onMessageReceived: " + message;
+    }
+
+    @Override
+    public void onDisconnected() {
+        debugText = "Disconnected";
+    }
+
+    public void appendText(String text) { debugText += "\n" + text; }
+
+    public MultiplayerController getDeviceAPI() { return mController; }
 }

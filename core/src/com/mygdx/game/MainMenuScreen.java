@@ -58,8 +58,6 @@ public class MainMenuScreen implements Screen, GameListener {
     boolean hideButtons;
 
     GameClientInterface gameClient;
-    MyServer mServer;
-    MyClient mClient;
 
     MultiplayerController mController;
 

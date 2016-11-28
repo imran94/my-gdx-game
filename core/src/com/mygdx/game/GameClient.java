@@ -27,13 +27,7 @@ abstract public class GameClient implements GameClientInterface {
 
     public String getLocalSubnet() {
         String[] bytes = localAddress.split("\\.");
-
-        StringBuilder subnet = new StringBuilder();
-        for (int i = 0; i < 3; i++) {
-            subnet.append(bytes[i] + ".");
-        }
-
-        return subnet.toString();
+        return bytes[0] + "." + bytes[1] + "." + bytes[2] + ".";
     }
 
     @Override

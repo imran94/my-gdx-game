@@ -233,6 +233,10 @@ public class MainMenuScreen implements Screen, GameListener {
     @Override
     public void onMessageReceived(String message) {
         debugText = "onMessageReceived: " + message;
+
+        String[] coords = message.split(",");
+        x2 = Integer.parseInt(coords[0]);
+        y2 = Integer.parseInt(coords[1]);
     }
 
     @Override

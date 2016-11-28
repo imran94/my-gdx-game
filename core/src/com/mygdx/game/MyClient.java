@@ -1,10 +1,6 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.Gdx;
-
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -69,29 +65,6 @@ public class MyClient extends GameClient {
             t.start();
         } else {
             MainMenuScreen.debugText += "\nCould not find a server";
-        }
-    }
-
-    private class ReceiveThread implements Runnable {
-
-        public void run() {
-            MainMenuScreen.debugText = "ReceiveThread started";
-            while (isConnected()) {
-                try {
-                    MainMenuScreen.debugText += "\nReading message";
-
-                    ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                    String message = ois.readUTF();
-
-                    MainMenuScreen.debugText += "\nMessage received: " + message;
-                    callback.onMessageReceived(message);
-                } catch (IOException io) {
-                    MainMenuScreen.debugText += "\n" + io.getMessage();
-                    Gdx.app.log("mygdxgame", io.getMessage());
-                }
-            }
-
-            MainMenuScreen.debugText = "Exited ReceiveThread";
         }
     }
 }

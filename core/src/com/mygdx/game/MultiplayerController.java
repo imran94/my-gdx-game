@@ -4,7 +4,11 @@ package com.mygdx.game;
  * Created by Administrator on 04-Nov-16.
  */
 public interface MultiplayerController {
-    void initialize();
+
+    String TAG = "mygdxgame";
+
     String getIpAddress();
     boolean isReachable(String ip);
+    void log(String message);
+
 }

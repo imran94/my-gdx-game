@@ -9,6 +9,8 @@ public interface MultiplayerController {
 
     String getIpAddress();
     boolean isReachable(String ip);
-    void log(String message);
+    boolean isConnectedToLocalNetwork();
 
+    void log(String message);
+    void showNotification(String message);
 }

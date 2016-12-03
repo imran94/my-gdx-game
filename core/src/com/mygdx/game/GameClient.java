@@ -16,14 +16,15 @@ abstract public class GameClient implements GameClientInterface {
 
     GameListener callback;
     String localAddress;
+    Thread receiveThread;
 
     public GameClient(GameListener callback, String localAddress) {
         this.callback = callback;
         this.localAddress = localAddress;
     }
 
-    @Override
-    public abstract void run();
+    @Override abstract public void run();
+    @Override abstract public int getPlayerNumber();
 
     public String getLocalSubnet() {
         String[] bytes = localAddress.split("\\.");
@@ -36,9 +37,17 @@ abstract public class GameClient implements GameClientInterface {
     }
 
     @Override
-    public void onConnected(Socket s) {
-        socket = s;
+    public void onConnected() {
         callback.onConnected();
+    }
+
+    @Override
+    public void onDisconnected() {
+        try {
+            socket.close();
+        } catch(IOException io) {}
+
+        callback.onDisconnected();
     }
 
     @Override
@@ -108,6 +117,8 @@ abstract public class GameClient implements GameClientInterface {
                     Gdx.app.log("mygdxgame", io.getMessage());
                 }
             }
+
+            onDisconnected();
         }
     }
 }

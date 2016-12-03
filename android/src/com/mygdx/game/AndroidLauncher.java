@@ -20,4 +20,8 @@ public class AndroidLauncher extends AndroidApplication {
 
 		initialize(new MyGdxGame(new WarpController(this)), config);
 	}
+
+	public void showNotification(String message) {
+
+	}
 }

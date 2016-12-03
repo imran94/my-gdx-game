@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.health.PackageHealthStats;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.shephertz.app42.gaming.multiplayer.client.WarpClient;
 import com.shephertz.app42.gaming.multiplayer.client.command.WarpResponseResultCode;
@@ -84,4 +85,15 @@ public class WarpController implements MultiplayerController {
     }
 
     public void log(String message) { Log.d(TAG, message); }
+
+    public void showNotification(String message) {
+
+    }
+
+    public boolean isConnectedToLocalNetwork() {
+        ConnectivityManager connManager =
+                (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = connManager.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
 }

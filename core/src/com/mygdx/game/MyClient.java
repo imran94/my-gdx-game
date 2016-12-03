@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,31 +16,6 @@ public class MyClient extends GameClient {
 
     public MyClient(GameListener callback, String localAddress) {
         super (callback, localAddress);
-    }
-
-    private class ConnectThread implements Runnable {
-
-        String subnet;
-
-        public ConnectThread(String subnet) {
-            this.subnet = subnet;
-        }
-
-        public void run() {
-            try {
-                Socket s = new Socket();
-                s.setReuseAddress(true);
-
-                SocketAddress address = new InetSocketAddress(subnet, GameClient.port);
-                s.connect(address);
-                socket = s;
-                if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
-
-                MainMenuScreen.debugText = "Thread successfully connected to " + subnet;
-            } catch (IOException io) {
-                MainMenuScreen.debugText += "\nCould not connect to " + subnet;
-            }
-        }
     }
 
     @Override
@@ -61,10 +38,46 @@ public class MyClient extends GameClient {
 
             MainMenuScreen.debugText = "Successfully connected to " + socket.getInetAddress();
 
-            Thread t = new Thread(new ReceiveThread());
-            t.start();
+            receiveThread = new Thread(new ReceiveThread());
+            receiveThread.start();
+            callback.onConnected();
         } else {
-            MainMenuScreen.debugText += "\nCould not find a server";
+            callback.onConnectionFailed();
+        }
+    }
+
+    @Override
+    public void disconnect() {
+        onDisconnected();
+    }
+
+    @Override
+    public int getPlayerNumber() {
+        return GameListener.PLAYER2;
+    }
+
+    private class ConnectThread implements Runnable {
+
+        String subnet;
+
+        public ConnectThread(String subnet) {
+            this.subnet = subnet;
+        }
+
+        public void run() {
+            try {
+                Socket s = new Socket(subnet, GameClient.port);
+//                s.setReuseAddress(true);
+//
+//                SocketAddress address = new InetSocketAddress(subnet, GameClient.port);
+//                s.connect(address);
+                socket = s;
+                if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
+
+                Gdx.app.log("mygdxgame", "Successfully connected to " + subnet);
+                MainMenuScreen.debugText = "Thread successfully connected to " + subnet;
+            } catch (IOException io) {
+            }
         }
     }
 }

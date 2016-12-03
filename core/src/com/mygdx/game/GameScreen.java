@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -17,9 +18,11 @@ import com.badlogic.gdx.math.Vector3;
 /**
  * Created by Administrator on 15-Nov-16.
  */
-public class GameScreen implements Screen {
+public class GameScreen implements Screen, GameListener {
 
     Game game;
+    MultiplayerController mController;
+    GameClientInterface gameClient;
 
     OrthographicCamera guiCam;
     SpriteBatch batch;
@@ -31,8 +34,9 @@ public class GameScreen implements Screen {
 
     ShapeRenderer shapeRenderer;
 
-    public GameScreen(Game game) {
+    public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
+        this.mController = mController;
 
         shapeRenderer = new ShapeRenderer();
 
@@ -50,6 +54,35 @@ public class GameScreen implements Screen {
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         touchPoint = new Vector3();
+    }
+
+    public GameScreen(Game game, MultiplayerController mController, GameClientInterface gameClient) {
+        this.game = game;
+        this.mController = mController;
+        this.gameClient = gameClient;
+        this.gameClient.setListener(this);
+
+        shapeRenderer = new ShapeRenderer();
+
+        guiCam = new OrthographicCamera(320, 480);
+        guiCam.setToOrtho(false);
+        guiCam.position.set(0, 0, 0);
+
+        batch = new SpriteBatch();
+        batch.setProjectionMatrix(guiCam.combined);
+
+        img = new Texture("Board2.png");
+        background = new TextureRegion(img, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        backgroundSprite = new Sprite(img);
+//        backgroundSprite.setSize(1f, backgroundSprite.getHeight() / backgroundSprite.getWidth());
+        backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        touchPoint = new Vector3();
+    }
+
+    public void setGameClient(GameClientInterface gameClient) {
+        this.gameClient = gameClient;
+        this.gameClient.setListener(this);
     }
 
     float x1 = Gdx.graphics.getWidth() / 2;
@@ -112,6 +145,10 @@ public class GameScreen implements Screen {
     }
 
     public void update() {
+        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+            gameClient.disconnect();
+        }
+
         x3 += puckSpeedX;
         y3 += puckSpeedY;
 
@@ -127,18 +164,29 @@ public class GameScreen implements Screen {
             }
         }
 
-        for (int i = 0; i < 2; i++) {
-            if (Gdx.input.isTouched(i)) {
-                guiCam.unproject(touchPoint.set(Gdx.input.getX(i), Gdx.input.getY(i), 0));
+        if (Gdx.input.isTouched()) {
+            guiCam.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 
-                if (touchPoint.y <= Gdx.graphics.getHeight() / 2) {
+            switch(gameClient.getPlayerNumber()) {
+                case PLAYER1:
                     x1 = touchPoint.x;
                     y1 = touchPoint.y;
-                } else {
+                    break;
+                case PLAYER2:
                     x2 = touchPoint.x;
                     y2 = touchPoint.y;
-                }
+                    break;
             }
+
+            gameClient.sendMessage(touchPoint.x + "," + touchPoint.y);
+        }
+
+        if (y1 > Gdx.graphics.getHeight() / 2) {
+            y1 = Gdx.graphics.getHeight() / 2;
+        }
+
+        if (y2 < Gdx.graphics.getHeight() / 2) {
+            y2 = Gdx.graphics.getHeight() / 2;
         }
 
         // Paddle 1 collision
@@ -189,7 +237,6 @@ public class GameScreen implements Screen {
 
     }
 
-
     public void resetPuck() {
         x3 = Gdx.graphics.getWidth() / 2;
         y3 = Gdx.graphics.getHeight() / 2;
@@ -199,32 +246,47 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void show() {
+    public void onConnected() {
 
     }
 
     @Override
-    public void resize(int width, int height) {
+    public void onDisconnected() {
+//        mController.showNotification("Disconnected from game");
+        game.setScreen(new MainMenuScreen(game, mController));
+    }
+
+    @Override
+    public void onConnectionFailed() {
 
     }
 
     @Override
-    public void pause() {
+    public void onMessageReceived(String message) {
 
+        String[] coords = message.split(",");
+
+        switch(gameClient.getPlayerNumber()) {
+            case PLAYER1:
+                x2 = Float.parseFloat(coords[0]);
+                y2 = Float.parseFloat(coords[1]);
+                break;
+            case PLAYER2:
+                x1 = Float.parseFloat(coords[0]);
+                y1 = Float.parseFloat(coords[1]);
+                break;
+        }
     }
 
     @Override
-    public void resume() {
-
+    public MultiplayerController getDeviceAPI() {
+        return mController;
     }
 
-    @Override
-    public void hide() {
-
-    }
-
-    @Override
-    public void dispose() {
-
-    }
+    @Override public void show() {}
+    @Override public void resize(int width, int height) {}
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void hide() {}
+    @Override public void dispose() {}
 }

@@ -13,4 +13,5 @@ public interface MultiplayerController {
 
     void log(String message);
     void showNotification(String message);
+    void startRecording();
 }

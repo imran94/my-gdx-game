@@ -1,5 +1,10 @@
 package com.mygdx.game;
 
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.content.Context;
 import android.net.NetworkInfo;
@@ -23,6 +28,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 import java.nio.charset.MalformedInputException;
 import java.util.Formatter;
+import java.util.stream.Stream;
 
 /**
  * Created by Administrator on 04-Nov-16.
@@ -95,5 +101,64 @@ public class WarpController implements MultiplayerController {
                 (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
         NetworkInfo info = connManager.getActiveNetworkInfo();
         return info != null && info.isConnected();
+    }
+
+    public void startRecording() {
+        Thread t = new Thread(new StreamThread());
+        t.start();
+    }
+
+    private class StreamThread implements Runnable {
+
+        byte[] buffer;
+        AudioRecord recorder;
+
+        private int sampleRate = 8000;      //How much will be ideal?
+        private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+        private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+        public void run() {
+                int recorderBufSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
+
+                byte[] buffer = new byte[recorderBufSize];
+                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,recordChannelConfig,audioFormat, recorderBufSize);
+                recorder.startRecording();
+
+                while (true) {
+                    recorderBufSize = recorder.read(buffer, 0, buffer.length);
+                    Thread t = new Thread(new SpeakerThread(buffer));
+                    t.start();
+                }
+        }
+    }
+
+    boolean playing = false;
+
+    private class SpeakerThread implements Runnable {
+
+        byte[] buffer;
+        AudioTrack speaker;
+
+        private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
+        private int sampleRate = 8000;      //How much will be ideal?
+        private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+        public SpeakerThread(byte[] buffer) {
+            this.buffer = buffer;
+        }
+
+        public void run() {
+            if (playing) return;
+
+            playing = true;
+            int minBufSize = AudioRecord.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
+
+            speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,speakerChannelConfig,audioFormat,minBufSize,AudioTrack.MODE_STREAM);
+
+            speaker.play();
+            speaker.write(buffer, 0, minBufSize);
+
+            playing = false;
+        }
     }
 }

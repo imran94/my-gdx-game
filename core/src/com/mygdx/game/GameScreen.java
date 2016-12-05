@@ -14,6 +14,9 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
  * Created by Administrator on 15-Nov-16.
@@ -34,24 +37,36 @@ public class GameScreen implements Screen, GameListener {
 
     ShapeRenderer shapeRenderer;
 
+    Viewport gamePort;
+
+    final int GAME_WIDTH = 320;
+    final int GAME_HEIGHT = 480;
+
+    int SCREEN_WIDTH, SCREEN_HEIGHT;
+
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
         this.mController = mController;
 
         shapeRenderer = new ShapeRenderer();
 
-        guiCam = new OrthographicCamera(320, 480);
+        guiCam = new OrthographicCamera();
+        gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
         guiCam.setToOrtho(false);
         guiCam.position.set(0, 0, 0);
 
         batch = new SpriteBatch();
         batch.setProjectionMatrix(guiCam.combined);
 
+        SCREEN_WIDTH = Gdx.graphics.getWidth();
+        SCREEN_HEIGHT = Gdx.graphics.getHeight();
+
         img = new Texture("Board2.png");
         background = new TextureRegion(img, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         backgroundSprite = new Sprite(img);
 //        backgroundSprite.setSize(1f, backgroundSprite.getHeight() / backgroundSprite.getWidth());
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+//        backgroundSprite.setSize(GAME_WIDTH, GAME_HEIGHT);
 
         touchPoint = new Vector3();
     }
@@ -146,7 +161,7 @@ public class GameScreen implements Screen, GameListener {
 
     public void update() {
         if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
-            gameClient.disconnect();
+//            gameClient.disconnect();
         }
 
         x3 += puckSpeedX;
@@ -165,20 +180,25 @@ public class GameScreen implements Screen, GameListener {
         }
 
         if (Gdx.input.isTouched()) {
-            guiCam.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
+            guiCam.project(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
+            touchPoint.x = touchPoint.x * GAME_WIDTH / Gdx.graphics.getWidth();
+            Gdx.app.log(MultiplayerController.TAG, touchPoint.x + ", " + touchPoint.y);
 
-            switch(gameClient.getPlayerNumber()) {
-                case PLAYER1:
-                    x1 = touchPoint.x;
-                    y1 = touchPoint.y;
-                    break;
-                case PLAYER2:
-                    x2 = touchPoint.x;
-                    y2 = touchPoint.y;
-                    break;
-            }
+//            switch(gameClient.getPlayerNumber()) {
+//                case PLAYER1:
+//                    x1 = touchPoint.x;
+//                    y1 = touchPoint.y;
+//                    break;
+//                case PLAYER2:
+//                    x2 = touchPoint.x;
+//                    y2 = touchPoint.y;
+//                    break;
+//            }
 
-            gameClient.sendMessage(touchPoint.x + "," + touchPoint.y);
+//            gameClient.sendMessage(touchPoint.x + "," + touchPoint.y);
+
+            x1 = touchPoint.x;
+            y1 = touchPoint.y;
         }
 
         if (y1 > Gdx.graphics.getHeight() / 2) {

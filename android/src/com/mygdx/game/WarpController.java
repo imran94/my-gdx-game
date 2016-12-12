@@ -108,27 +108,44 @@ public class WarpController implements MultiplayerController {
         t.start();
     }
 
+    final int maxBufferSize = 4096;
+    final int sampleRate = 8000;
+    final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
     private class StreamThread implements Runnable {
 
         byte[] buffer;
         AudioRecord recorder;
 
-        private int sampleRate = 8000;      //How much will be ideal?
         private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
-        private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
         public void run() {
-                int recorderBufSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
+            int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
+            int recorderBufSize = Math.max(minBufferSize, maxBufferSize);
+            Log.d(TAG, "Buffer size: " + recorderBufSize);
+            buffer = new byte[recorderBufSize];
 
-                byte[] buffer = new byte[recorderBufSize];
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,recordChannelConfig,audioFormat, recorderBufSize);
+            try {
+                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                        sampleRate,
+                        recordChannelConfig,
+                        audioFormat,
+                        recorderBufSize);
+
                 recorder.startRecording();
+                Log.d(TAG, "Started recording");
 
                 while (true) {
                     recorderBufSize = recorder.read(buffer, 0, buffer.length);
+
                     Thread t = new Thread(new SpeakerThread(buffer));
                     t.start();
                 }
+            } catch (Throwable t) {
+                Log.d(TAG, t.getMessage());
+            } finally {
+                recorder.release();
+            }
         }
     }
 
@@ -140,8 +157,7 @@ public class WarpController implements MultiplayerController {
         AudioTrack speaker;
 
         private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
-        private int sampleRate = 8000;      //How much will be ideal?
-        private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
 
         public SpeakerThread(byte[] buffer) {
             this.buffer = buffer;
@@ -151,13 +167,21 @@ public class WarpController implements MultiplayerController {
             if (playing) return;
 
             playing = true;
-            int minBufSize = AudioRecord.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
 
-            speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,speakerChannelConfig,audioFormat,minBufSize,AudioTrack.MODE_STREAM);
+            try {
+                int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
 
-            speaker.play();
-            speaker.write(buffer, 0, minBufSize);
-
+                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
+                Log.d(TAG, "Speaker initialised");
+                speaker.play();
+                speaker.write(buffer, 0, minBufSize);
+                Log.d(TAG, "Writing to speaker");
+            } catch (Throwable t) {
+                Log.d(TAG, "Error: " + t.getMessage());
+            } finally {
+                speaker.release();
+                Log.d(TAG, "Released speaker");
+            }
             playing = false;
         }
     }

@@ -56,8 +56,6 @@ public class MainMenuScreen implements Screen, GameListener {
         guiCam.position.set(0, 0, 0);
         batch.setProjectionMatrix(guiCam.combined);
 
-
-
         createBounds = new Rectangle(Gdx.graphics.getWidth() / 3,
                 Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4,
                 Gdx.graphics.getWidth() / 4,

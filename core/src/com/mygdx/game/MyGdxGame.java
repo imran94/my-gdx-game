@@ -13,6 +13,7 @@ public class MyGdxGame extends Game implements ApplicationListener {
 
 	@Override
 	public void create () {
+//		setScreen(new MainMenuScreen(this, mController));
 		setScreen(new GameScreen(this, mController));
 	}
 

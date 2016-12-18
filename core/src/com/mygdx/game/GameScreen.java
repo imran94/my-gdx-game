@@ -33,7 +33,9 @@ public class GameScreen implements Screen, GameListener {
 
     Texture img, puckImg, paddleImg1, paddleImg2;
     TextureRegion background;
-    Sprite backgroundSprite, puckSprite, paddleSprite1, paddleSprite2;
+    Sprite backgroundSprite, paddleSprite1, paddleSprite2;
+
+    Puck puck;
 
     ShapeRenderer shapeRenderer;
 
@@ -45,10 +47,8 @@ public class GameScreen implements Screen, GameListener {
     int SCREEN_WIDTH, SCREEN_HEIGHT;
 
     int paddleRadius = 70;
-    int puckRadius = 30;
 
-    float PADDLE_WIDTH,PADDLE_HEIGHT, PUCK_WIDTH,PUCK_HEIGHT;
-
+    float PADDLE_WIDTH,PADDLE_HEIGHT;
 
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
@@ -87,29 +87,23 @@ public class GameScreen implements Screen, GameListener {
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 //        backgroundSprite.setSize(GAME_WIDTH, GAME_HEIGHT);
 
+        puck = new Puck();
+
         paddleImg1 = new Texture("Paddle.png");
         paddleImg2 = new Texture("Paddle.png");
-        puckImg = new Texture("Puck.png");
 
         paddleSprite1 = new Sprite(paddleImg1);
         paddleSprite2 = new Sprite(paddleImg2);
-        puckSprite = new Sprite(puckImg);
 
         paddleSprite1.setSize(paddleRadius * SCREEN_WIDTH / GAME_WIDTH,
                 paddleRadius * SCREEN_HEIGHT / GAME_HEIGHT);
         paddleSprite2.setSize(paddleRadius * SCREEN_WIDTH / GAME_WIDTH,
                 paddleRadius * SCREEN_HEIGHT / GAME_HEIGHT);
-        puckSprite.setSize(puckRadius * SCREEN_WIDTH / GAME_WIDTH,
-                puckRadius * SCREEN_HEIGHT / GAME_HEIGHT);
 
         PADDLE_WIDTH = paddleSprite1.getWidth();
         PADDLE_HEIGHT = paddleSprite2.getHeight();
 
-        PUCK_WIDTH = puckSprite.getWidth();
-        PUCK_HEIGHT = puckSprite.getHeight();
-
         paddleRadius = paddleRadius * SCREEN_WIDTH / GAME_WIDTH;
-        puckRadius = puckRadius * SCREEN_WIDTH / GAME_WIDTH;
 
         touchPoint = new Vector3();
     }
@@ -181,8 +175,9 @@ public class GameScreen implements Screen, GameListener {
 //        shapeRenderer.circle(x3, y3, puckRadius);
 //        shapeRenderer.end();
 
-        puckSprite.setPosition(x3 - PUCK_WIDTH / 2, y3 - PUCK_HEIGHT / 2);
-        puckSprite.draw(batch);
+//        puckSprite.setPosition(x3 - PUCK_WIDTH / 2, y3 - PUCK_HEIGHT / 2);
+//        puckSprite.draw(batch);
+        puck.draw();
     }
 
     public void update() {
@@ -190,12 +185,7 @@ public class GameScreen implements Screen, GameListener {
             gameClient.disconnect();
         }
 
-        x3 += puckSpeedX;
-        y3 += puckSpeedY;
-
-        if (x3 <= 0 || x3 >= Gdx.graphics.getWidth()) {
-            puckSpeedX *= -1;
-        }
+        puck.update();
 
         if (y3 <= 0 || y3 >= Gdx.graphics.getHeight()) {
             if (x3 > 100 && x3 < Gdx.graphics.getWidth() - 100) {
@@ -263,7 +253,7 @@ public class GameScreen implements Screen, GameListener {
                 puckSpeedY *= -1;
             }
 
-            float deltaX = x3 - (x1 - puckRadius + puckRadius / 2);
+            float deltaX = x3 - (x1 - puck.radius + puck.radius / 2);
             puckSpeedX = (float) (deltaX * 0.4);
         }
 
@@ -281,7 +271,7 @@ public class GameScreen implements Screen, GameListener {
                 puckSpeedY *= -1;
             }
 
-            float deltaX = x3 - (x2 - puckRadius + puckRadius / 2);
+            float deltaX = x3 - (x2 - puck.radius + puck.radius / 2);
             puckSpeedX = (float) (deltaX * 0.4);
         }
 
@@ -338,6 +328,70 @@ public class GameScreen implements Screen, GameListener {
     public MultiplayerController getDeviceAPI() {
         return mController;
     }
+
+    class Puck {
+        public Vector2d velocity = new Vector2d(0, 0);
+        public float x = 0;
+        public float y = 0;
+        public int radius = 30;
+
+        Texture puckImg;
+        Sprite puckSprite;
+
+        public Puck() {
+            radius = radius * SCREEN_WIDTH / GAME_WIDTH;
+
+            puckImg = new Texture("Puck.png");
+            puckSprite = new Sprite(puckImg);
+            puckSprite.setSize(radius * SCREEN_WIDTH / GAME_WIDTH,
+                    radius * SCREEN_HEIGHT / GAME_HEIGHT);
+
+            velocity.i = 0;
+            velocity.j = 0;
+        }
+
+        public float getWidth() {return puckSprite.getWidth();}
+        public float getHeight() {return puckSprite.getHeight();}
+
+        public void draw() {
+            puckSprite.setPosition(x - getWidth() / 2, y - getHeight() / 2);
+            puckSprite.draw(batch);
+        }
+
+        public void move() {
+            x += velocity.i *= .98;
+            y += velocity.j *= .98;
+
+            // bounce off left wall
+            if(x <= radius){
+                velocity.i = Math.abs(velocity.i); //bounce
+                x = radius;
+            }
+
+            // bounce off right wall
+            if(x >= Gdx.graphics.getWidth() - radius){
+                velocity.i = -Math.abs(velocity.i);
+                x = Gdx.graphics.getWidth() - x;
+            }
+
+            // bounce off bottom
+            if(y <= radius){
+                velocity.j = Math.abs(velocity.j);
+                y = radius;
+            }
+
+            // bounce off top
+            if(y >= Gdx.graphics.getHeight() - radius){
+                velocity.j = -Math.abs(velocity.j);
+                y = Gdx.graphics.getHeight() - radius;
+            }
+        }
+    }
+
+    class Player {
+        
+    }
+
 
     @Override public void show() {}
     @Override public void resize(int width, int height) {}

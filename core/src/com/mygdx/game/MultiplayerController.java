@@ -8,10 +8,11 @@ public interface MultiplayerController {
     String TAG = "mygdxgame";
 
     String getIpAddress();
-    boolean isReachable(String ip);
     boolean isConnectedToLocalNetwork();
 
     void log(String message);
     void showNotification(String message);
     void startRecording();
+    void setCallback(GameClientInterface callback);
+    void transmit(byte[] message, int bufferSize);
 }

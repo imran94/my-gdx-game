@@ -161,7 +161,7 @@ public class GameScreen implements Screen, GameListener {
 
     public void update() {
         if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
-//            gameClient.disconnect();
+            gameClient.disconnect();
         }
 
         x3 += puckSpeedX;
@@ -180,25 +180,24 @@ public class GameScreen implements Screen, GameListener {
         }
 
         if (Gdx.input.isTouched()) {
-            guiCam.project(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
-            touchPoint.x = touchPoint.x * GAME_WIDTH / Gdx.graphics.getWidth();
-            Gdx.app.log(MultiplayerController.TAG, touchPoint.x + ", " + touchPoint.y);
+            guiCam.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
+//            Gdx.app.log(MultiplayerController.TAG, touchPoint.x + ", " + touchPoint.y);
 
-//            switch(gameClient.getPlayerNumber()) {
-//                case PLAYER1:
-//                    x1 = touchPoint.x;
-//                    y1 = touchPoint.y;
-//                    break;
-//                case PLAYER2:
-//                    x2 = touchPoint.x;
-//                    y2 = touchPoint.y;
-//                    break;
-//            }
+            switch(gameClient.getPlayerNumber()) {
+                case PLAYER1:
+                    x1 = touchPoint.x;
+                    y1 = touchPoint.y;
+                    break;
+                case PLAYER2:
+                    x2 = touchPoint.x;
+                    y2 = touchPoint.y;
+                    break;
+            }
 
-//            gameClient.sendMessage(touchPoint.x + "," + touchPoint.y);
+            touchPoint.x *= GAME_WIDTH / Gdx.graphics.getWidth();
+            touchPoint.y *= GAME_HEIGHT / Gdx.graphics.getHeight();
 
-            x1 = touchPoint.x;
-            y1 = touchPoint.y;
+            gameClient.sendMessage(touchPoint.x + "," + touchPoint.y);
         }
 
         if (y1 > Gdx.graphics.getHeight() / 2) {
@@ -283,17 +282,19 @@ public class GameScreen implements Screen, GameListener {
 
     @Override
     public void onMessageReceived(String message) {
-
         String[] coords = message.split(",");
+
+        float x = Float.parseFloat(coords[0]) * Gdx.graphics.getWidth() / GAME_WIDTH;
+        float y = Float.parseFloat(coords[1]) * Gdx.graphics.getHeight() / GAME_HEIGHT;
 
         switch(gameClient.getPlayerNumber()) {
             case PLAYER1:
-                x2 = Float.parseFloat(coords[0]);
-                y2 = Float.parseFloat(coords[1]);
+                x2 = x;
+                y2 = y;
                 break;
             case PLAYER2:
-                x1 = Float.parseFloat(coords[0]);
-                y1 = Float.parseFloat(coords[1]);
+                x1 = x;
+                y1 = y;
                 break;
         }
     }

@@ -14,6 +14,7 @@ public interface GameClientInterface extends Runnable {
     void onDisconnected();
     void setListener(GameListener callback);
     void sendMessage(String message);
+    void sendMessage(byte[] message);
     int getPlayerNumber();
 
     @Override

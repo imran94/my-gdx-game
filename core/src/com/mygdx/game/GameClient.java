@@ -59,45 +59,35 @@ abstract public class GameClient implements GameClientInterface {
     public void sendMessage(String message) {
         Thread t = new Thread(new MessageThread(message));
         t.start();
+    }
 
-//        if (!isConnected()) return;
-//
-//        try {
-//            OutputStream out = socket.getOutputStream();
-//            OutputStreamWriter writer = new OutputStreamWriter(out);
-//            BufferedWriter bw = new BufferedWriter(writer);
-//            bw.write(message);
-//            bw.flush();
-//            MainMenuScreen.debugText = "Send message " + message;
-//        } catch (IOException io) {
-//            MainMenuScreen.debugText = "Unable to send message. " + io.getMessage();
-//        }
+    @Override
+    public void sendMessage(byte[] message) {
+        Thread t = new Thread(new MessageThread(message));
+        t.start();
     }
 
     protected class MessageThread implements Runnable {
-        String message;
-        boolean sending;
+        byte[] message;
 
         public MessageThread(String message) {
+            this.message = message.getBytes();
+        }
+
+        public MessageThread(byte[] message) {
             this.message = message;
-            sending = false;
         }
 
         @Override
         public void run() {
-//            if (!isConnected() || sending) return;
-//
-//            sending = true;
             try {
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.writeUTF(message);
+                oos.write(message);
                 oos.flush();
-
-                MainMenuScreen.debugText = "Send message: " + message;
+                Gdx.app.log(MultiplayerController.TAG, "Message sent");
             } catch (IOException io) {
-                MainMenuScreen.debugText = "Unable to send message. " + io.getMessage();
+                Gdx.app.log(MultiplayerController.TAG, "Failed to send message");
             }
-//            sending = false;
         }
     }
 
@@ -105,16 +95,26 @@ abstract public class GameClient implements GameClientInterface {
         public void run() {
             MainMenuScreen.debugText = "ReceiveThread running";
             while (isConnected()) {
-                MainMenuScreen.debugText += "\nisConnected";
+                MainMenuScreen.debugText = "isConnected";
+                byte[] message = new byte[4096];
                 try {
                     ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                    String message = ois.readUTF();
+                    Gdx.app.log("mygdxgame", "ois Created");
+                    ois.readFully(message);
+                    Gdx.app.log("mygdxgame", "Message read: " + new String(message));
+                    String s = new String(message);
 
-                    MainMenuScreen.debugText += "\nMessage received: " + message;
-                    callback.onMessageReceived(message);
-                } catch (IOException io) {
-                    MainMenuScreen.debugText += "\n" + io.getMessage();
-                    Gdx.app.log("mygdxgame", io.getMessage());
+                    Gdx.app.log(MultiplayerController.TAG, "Message Received: " + s.length());
+                    if (s.length() <= 10) {
+                        callback.onMessageReceived(s);
+                        Gdx.app.log("mygdxgame", "onMessageReceived");
+                    } else {
+                        Gdx.app.log("mygdxgame", "Message length greater than 10");
+                        callback.getDeviceAPI().transmit(message, 4096);
+                        Gdx.app.log("mygdxgame", "Transmitting");
+                    }
+                } catch (Exception io) {
+                    Gdx.app.log("mygdxgame", io.toString());
                 }
             }
 

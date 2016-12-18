@@ -56,8 +56,6 @@ public class MainMenuScreen implements Screen, GameListener {
         guiCam.position.set(0, 0, 0);
         batch.setProjectionMatrix(guiCam.combined);
 
-
-
         createBounds = new Rectangle(Gdx.graphics.getWidth() / 3,
                 Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4,
                 Gdx.graphics.getWidth() / 4,
@@ -89,13 +87,11 @@ public class MainMenuScreen implements Screen, GameListener {
 
         this.mController = mController;
         debugText = mController.getIpAddress();
+
+        mController.startRecording();
     }
 
     public void update() {
-//        if (Gdx.input.isTouched()) {
-//            game.setScreen(new GameScreen(game, mController));
-//        }
-
         if (Gdx.input.justTouched() && !hideButtons) {
             guiCam.unproject(touchpoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 
@@ -178,6 +174,8 @@ public class MainMenuScreen implements Screen, GameListener {
     @Override
     public void onConnected() {
         debugText = "Connected to socket";
+        mController.setCallback(gameClient);
+        mController.startRecording();
 //        mController.showNotification("Found game");
 
         Timer.schedule(new Timer.Task() {
@@ -185,7 +183,7 @@ public class MainMenuScreen implements Screen, GameListener {
             public void run() {
                 game.setScreen(new GameScreen(game, mController, gameClient));
             }
-        }, 2);
+        }, 0.5f);
     }
 
     @Override

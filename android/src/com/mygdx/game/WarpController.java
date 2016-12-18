@@ -148,7 +148,6 @@ public class WarpController implements MultiplayerController {
         int bufferSize;
 //        AudioTrack speaker;
 
-
         public SpeakerThread(byte[] buffer, int bufferSize) {
             this.buffer = buffer;
             this.bufferSize = bufferSize;
@@ -162,6 +161,23 @@ public class WarpController implements MultiplayerController {
             speaker.write(buffer, 0, bufferSize);
             recorder.startRecording();
 //            speaker.stop();
+            if (playing) return;
+
+            playing = true;
+
+            try {
+                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
+                Log.d(TAG, "Speaker initialised");
+                speaker.play();
+                speaker.write(buffer, 0, minBufSize);
+                Log.d(TAG, "Writing to speaker");
+            } catch (Throwable t) {
+                Log.d(TAG, "Error: " + t.getMessage());
+            } finally {
+                speaker.release();
+                Log.d(TAG, "Released speaker");
+            }
+            playing = false;
         }
     }
 }

@@ -49,6 +49,7 @@ public class MyServer extends GameClient {
     public void disconnect() {
         try {
             serverSocket.close();
+            socket.close();
         } catch(IOException io) {
             callback.getDeviceAPI().log("Unable to close server. " + io.getMessage());
         }

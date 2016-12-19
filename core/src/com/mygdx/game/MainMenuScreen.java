@@ -197,15 +197,17 @@ public class MainMenuScreen implements Screen, GameListener {
     public void onConnected() {
         debugText = "Connected to socket";
         mController.setCallback(gameClient);
-        mController.startRecording();
+//        mController.startRecording();
 //        mController.showNotification("Found game");
 
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
+                Gdx.app.log(mController.TAG, "Timer started");
                 game.setScreen(new GameScreen(game, mController, gameClient));
+                Gdx.app.log(mController.TAG, "GameScreen set");
             }
-        }, 0.5f);
+        }, 2.0f);
     }
 
     @Override

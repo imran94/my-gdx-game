@@ -58,24 +58,28 @@ abstract public class GameClient implements GameClientInterface {
 
     @Override
     public void sendMessage(String message) {
-        Thread t = new Thread(new MessageThread(message));
-        t.start();
+//        Thread t = new Thread(new MessageThread(message));
+//        t.start();
+
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            oos.writeUTF(message);
+            oos.flush();
+        } catch (IOException io) {
+            Gdx.app.log(MultiplayerController.TAG, "Failed to send message");
+        }
     }
 
     @Override
     public void sendMessage(byte[] message) {
-        Thread t = new Thread(new MessageThread(message));
-        t.start();
+//        Thread t = new Thread(new MessageThread(message));
+//        t.start();
     }
 
     protected class MessageThread implements Runnable {
-        byte[] message;
+        String message;
 
         public MessageThread(String message) {
-            this.message = message.getBytes();
-        }
-
-        public MessageThread(byte[] message) {
             this.message = message;
         }
 
@@ -83,7 +87,7 @@ abstract public class GameClient implements GameClientInterface {
         public void run() {
             try {
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.write(message);
+                oos.writeUTF(message);
                 oos.flush();
                 Gdx.app.log(MultiplayerController.TAG, "Message sent");
             } catch (IOException io) {
@@ -94,28 +98,16 @@ abstract public class GameClient implements GameClientInterface {
 
     protected class ReceiveThread implements Runnable {
         public void run() {
-            MainMenuScreen.debugText = "ReceiveThread running";
             while (isConnected()) {
                 MainMenuScreen.debugText = "isConnected";
-                byte[] message = new byte[4096];
                 try {
                     ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                    Gdx.app.log("mygdxgame", "ois Created");
-                    ois.readFully(message);
-                    Gdx.app.log("mygdxgame", "Message read: " + new String(message));
-                    String s = new String(message);
+                    String message = ois.readUTF();
 
-                    Gdx.app.log(MultiplayerController.TAG, "Message Received: " + s.length());
-                    if (s.length() <= 10) {
-                        callback.onMessageReceived(s);
-                        Gdx.app.log("mygdxgame", "onMessageReceived");
-                    } else {
-                        Gdx.app.log("mygdxgame", "Message length greater than 10");
-                        callback.getDeviceAPI().transmit(message, 4096);
-                        Gdx.app.log("mygdxgame", "Transmitting");
-                    }
+                    callback.onMessageReceived(message);
                 } catch (Exception io) {
-                    Gdx.app.log("mygdxgame", io.toString());
+                    MainMenuScreen.debugText += "\n" + io.getMessage();
+                    Gdx.app.log("mygdxgame", io.getMessage());
                 }
             }
 

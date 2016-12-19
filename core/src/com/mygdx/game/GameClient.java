@@ -25,6 +25,7 @@ abstract public class GameClient implements GameClientInterface {
 
     @Override abstract public void run();
     @Override abstract public int getPlayerNumber();
+    @Override abstract public void cancel();
 
     public String getLocalSubnet() {
         String[] bytes = localAddress.split("\\.");

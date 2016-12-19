@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
  */
 public class MyClient extends GameClient {
 
+    ExecutorService pool;
+
     public MyClient(GameListener callback, String localAddress) {
         super (callback, localAddress);
     }
@@ -22,7 +24,7 @@ public class MyClient extends GameClient {
     public void run() {
         int bitCount = 254;
 
-        ExecutorService pool = Executors.newFixedThreadPool(bitCount);
+        pool = Executors.newFixedThreadPool(bitCount);
 
         String subnet = getLocalSubnet();
         for (int i = 0; i <= bitCount; i++) {
@@ -54,6 +56,19 @@ public class MyClient extends GameClient {
     @Override
     public int getPlayerNumber() {
         return GameListener.PLAYER2;
+    }
+
+    @Override
+    public void cancel() {
+        if (isConnected()) {
+            try {
+                socket.close();
+            } catch (IOException io) {
+                Gdx.app.log(MultiplayerController.TAG, "Failed to close socket: " + io.toString());
+            }
+        }
+
+        if (!pool.isTerminated()) pool.shutdownNow();
     }
 
     private class ConnectThread implements Runnable {

@@ -29,6 +29,8 @@ public class MainMenuScreen implements Screen, GameListener {
     TextButton createButton;
     Rectangle joinBounds;
     TextButton joinButton;
+    Rectangle cancelBounds;
+    TextButton cancelButton;
     ShapeRenderer shapeRenderer;
 
     OrthographicCamera guiCam;
@@ -39,7 +41,7 @@ public class MainMenuScreen implements Screen, GameListener {
     public static String debugText = "";
 
     Skin skin;
-    Stage stage;
+    Stage stage, cancelStage;
     boolean hideButtons;
 
     GameClientInterface gameClient;
@@ -56,29 +58,38 @@ public class MainMenuScreen implements Screen, GameListener {
         guiCam.position.set(0, 0, 0);
         batch.setProjectionMatrix(guiCam.combined);
 
-        createBounds = new Rectangle(Gdx.graphics.getWidth() / 3,
-                Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4,
-                Gdx.graphics.getWidth() / 4,
-                Gdx.graphics.getHeight() / 10);
-        joinBounds = new Rectangle(Gdx.graphics.getWidth() / 3,
-                Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4 - createBounds.getHeight() * 2,
-                Gdx.graphics.getWidth() / 4,
-                Gdx.graphics.getHeight() / 10);
-
         createBasicSkin();
 
         createButton = new TextButton("Create Game", skin);
-        createButton.setPosition(Gdx.graphics.getWidth() / 3,
-                Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4);
+        createButton.setPosition(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2 - createButton.getHeight());
 //        createButton.setText("(" + createButton.getX() + ", " + createButton.getY() + ")");
         joinButton = new TextButton("Join Game", skin);
-        joinButton.setPosition(Gdx.graphics.getWidth() / 3,
-                Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 4 - createBounds.getHeight() * 2);
+        joinButton.setPosition(Gdx.graphics.getWidth() / 2 - joinButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2 + joinButton.getHeight());
 //        joinButton.setText("(" + joinButton.getX() + ", " + joinButton.getY() + ")");
+
+        createBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2 - createButton.getHeight(),
+                createButton.getWidth(), createButton.getHeight());
+        joinBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - joinButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2 + joinButton.getHeight(),
+                joinButton.getWidth(), joinButton.getWidth());
 
         stage = new Stage();
         stage.addActor(createButton);
         stage.addActor(joinButton);
+
+        cancelButton = new TextButton("Cancel", skin);
+        cancelButton.setPosition(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2);
+
+        cancelBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
+                Gdx.graphics.getHeight() / 2,
+                cancelButton.getWidth(), cancelButton.getHeight());
+
+        cancelStage = new Stage();
+        cancelStage.addActor(cancelButton);
 
         touchpoint = new Vector3();
         font = new BitmapFont();
@@ -87,32 +98,40 @@ public class MainMenuScreen implements Screen, GameListener {
 
         this.mController = mController;
         debugText = mController.getIpAddress();
-
-        mController.startRecording();
     }
 
     public void update() {
-        if (Gdx.input.justTouched() && !hideButtons) {
+        if (Gdx.input.justTouched()) {
             guiCam.unproject(touchpoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 
-            if (!mController.isConnectedToLocalNetwork()) {
-//                mController.showNotification("Not connected to a network.");
-                Gdx.app.log("mygdxgame", "Not connected to a network");
-            } else {
+            if (!hideButtons) {
                 if (createBounds.contains(touchpoint.x, touchpoint.y)) {
-                    Gdx.app.log("mygdxgame", "Create game");
-
-                    hideButtons = true;
-                    createServer();
+                    if (mController.isConnectedToLocalNetwork()) {
+                        hideButtons = true;
+                        createServer();
+                    } else {
+                        //                    mController.showNotification("Not connected to a network.");
+                        Gdx.app.log("mygdxgame", "Not connected to a network");
+                        debugText = "Not connected to a network";
+                    }
                 }
 
                 if (joinBounds.contains(touchpoint.x, touchpoint.y)) {
-                    Gdx.app.log("mygdxgame", "Join game");
-                    hideButtons = true;
-                    runClient();
+                    if (mController.isConnectedToLocalNetwork()) {
+                        hideButtons = true;
+                        runClient();
+                    } else {
+                        //                    mController.showNotification("Not connected to a network.");
+                        Gdx.app.log("mygdxgame", "Not connected to a network");
+                        debugText = "Not connected to a network";
+                    }
+                }
+            } else {
+                if (cancelBounds.contains(touchpoint.x, touchpoint.y)) {
+                    gameClient.cancel();
+                    hideButtons = false;
                 }
             }
-
         }
     }
 
@@ -123,6 +142,9 @@ public class MainMenuScreen implements Screen, GameListener {
         if (!hideButtons) {
             stage.act();
             stage.draw();
+        } else {
+            cancelStage.act();
+            cancelStage.draw();
         }
 
         batch.begin();

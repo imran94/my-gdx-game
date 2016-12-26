@@ -120,5 +120,4 @@ idea {
     }
 }
 dependencies {
-    compile files('libs/App42MultiPlayerGamingSDK.jar')
 }

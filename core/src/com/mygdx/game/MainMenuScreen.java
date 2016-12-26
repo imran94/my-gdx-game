@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -48,26 +49,33 @@ public class MainMenuScreen implements Screen, GameListener {
 
     MultiplayerController mController;
 
+    int GAME_WIDTH = 320;
+    int GAME_HEIGHT = 480;
+
     public MainMenuScreen(Game game, MultiplayerController mController) {
         this.game = game;
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
 
-        guiCam = new OrthographicCamera(320, 480);
+        guiCam = new OrthographicCamera(GAME_WIDTH, GAME_HEIGHT);
         guiCam.setToOrtho(false);
         guiCam.position.set(0, 0, 0);
         batch.setProjectionMatrix(guiCam.combined);
 
         createBasicSkin();
 
+        float scaleX = 0.5f * Gdx.graphics.getWidth() / GAME_WIDTH;
+        float scaleY = 0.5f * Gdx.graphics.getHeight() / GAME_HEIGHT;
+
         createButton = new TextButton("Create Game", skin);
         createButton.setPosition(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
                 Gdx.graphics.getHeight() / 2 - createButton.getHeight());
-//        createButton.setText("(" + createButton.getX() + ", " + createButton.getY() + ")");
+        createButton.getLabel().setFontScale(scaleX, scaleY);
+
         joinButton = new TextButton("Join Game", skin);
         joinButton.setPosition(Gdx.graphics.getWidth() / 2 - joinButton.getWidth() / 2,
                 Gdx.graphics.getHeight() / 2 + joinButton.getHeight());
-//        joinButton.setText("(" + joinButton.getX() + ", " + joinButton.getY() + ")");
+        joinButton.getLabel().setFontScale(scaleX, scaleY);
 
         createBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
                 Gdx.graphics.getHeight() / 2 - createButton.getHeight(),
@@ -83,6 +91,7 @@ public class MainMenuScreen implements Screen, GameListener {
         cancelButton = new TextButton("Cancel", skin);
         cancelButton.setPosition(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
                 Gdx.graphics.getHeight() / 2);
+        cancelButton.getLabel().setFontScale(scaleX, scaleY);
 
         cancelBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
                 Gdx.graphics.getHeight() / 2,
@@ -101,6 +110,14 @@ public class MainMenuScreen implements Screen, GameListener {
     }
 
     public void update() {
+        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+            if (hideButtons) {
+                gameClient.cancel();
+                hideButtons = false;
+            } else {
+                Gdx.app.exit();
+            }
+        }
         if (Gdx.input.justTouched()) {
             guiCam.unproject(touchpoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 

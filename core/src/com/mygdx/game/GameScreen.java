@@ -4,54 +4,45 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Administrator on 15-Nov-16.
  */
 public class GameScreen implements Screen, GameListener {
 
-    Game game;
-    MultiplayerController mController;
-    GameClientInterface gameClient;
+    private Game game;
+    private MultiplayerController mController;
+    private GameClientInterface gameClient;
 
-    OrthographicCamera guiCam;
-    SpriteBatch batch;
-    Vector3 touchPoint;
+    private OrthographicCamera guiCam;
+    private SpriteBatch batch;
+    private Vector3 touchPoint;
 
-    Texture img, puckImg, paddleImg1, paddleImg2;
-    TextureRegion background;
-    Sprite backgroundSprite, paddleSprite1, paddleSprite2;
+    private Texture img;
+    private TextureRegion background;
+    private Sprite backgroundSprite;
 
-    Puck puck;
-    Player player1, player2;
-    Player[] players;
+    private Puck puck;
+   	private Player player1, player2;
+    private Player[] players;
 
-    ShapeRenderer shapeRenderer;
+    private Viewport gamePort;
 
-    Viewport gamePort;
+    private final int GAME_WIDTH = 320;
+    private final int GAME_HEIGHT = 480;
 
-    final int GAME_WIDTH = 320;
-    final int GAME_HEIGHT = 480;
+    private int SCREEN_WIDTH, SCREEN_HEIGHT;
 
-    int SCREEN_WIDTH, SCREEN_HEIGHT;
-
-    float offset = 70;
+    private float offset = 70;
 
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
@@ -71,8 +62,6 @@ public class GameScreen implements Screen, GameListener {
     }
 
     public void createGame() {
-        shapeRenderer = new ShapeRenderer();
-
         guiCam = new OrthographicCamera();
         gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
         guiCam.setToOrtho(false);
@@ -87,9 +76,7 @@ public class GameScreen implements Screen, GameListener {
         img = new Texture("Board2.png");
         background = new TextureRegion(img, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         backgroundSprite = new Sprite(img);
-//        backgroundSprite.setSize(1f, backgroundSprite.getHeight() / backgroundSprite.getWidth());
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-//        backgroundSprite.setSize(GAME_WIDTH, GAME_HEIGHT);
 
         puck = new Puck();
         player1 = new Player();
@@ -100,9 +87,8 @@ public class GameScreen implements Screen, GameListener {
         player1.setPosition(SCREEN_WIDTH / 2, offset);
         player2.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
 
-//        paddleRadius = paddleRadius * SCREEN_WIDTH / GAME_WIDTH;
-
         touchPoint = new Vector3();
+
     }
 
     public void setGameClient(GameClientInterface gameClient) {
@@ -130,8 +116,6 @@ public class GameScreen implements Screen, GameListener {
         update();
 
         batch.begin();
-//            batch.draw(background, 0,0);
-//            backgroundSprite.draw(batch);
             draw();
             drawPaddle1();
             drawPaddle2();
@@ -179,14 +163,19 @@ public class GameScreen implements Screen, GameListener {
                         touchPoint.y = SCREEN_HEIGHT / 2;
 
                     player2.update(touchPoint.x, touchPoint.y);
+                    gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
+                            touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
                     break;
             }
+        }
 
-            float sendX = touchPoint.x * GAME_WIDTH / SCREEN_WIDTH;
-            float sendY = touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT;
-            gameClient.sendMessage(sendX + "," + sendY);
-
-            Gdx.app.log(MultiplayerController.TAG, "Send message: " + sendX + ", " + sendY);
+        if (gameClient.getPlayerNumber() == PLAYER1) {
+            gameClient.sendMessage(player1.x * GAME_WIDTH / SCREEN_WIDTH
+                    + "," + player1.y * GAME_HEIGHT / SCREEN_HEIGHT
+                    + "," + puck.x * GAME_WIDTH / SCREEN_WIDTH
+                    + "," + puck.y * GAME_HEIGHT / SCREEN_HEIGHT
+                    + "," + puck.velocity.i + "," + puck.velocity.j
+            );
         }
 
         checkCollision(player1, puck);
@@ -223,14 +212,14 @@ public class GameScreen implements Screen, GameListener {
 
     @Override
     public void onMessageReceived(String message) {
-        Gdx.app.log(MultiplayerController.TAG, "onMessageReceived: " + message);
+//        Gdx.app.log(MultiplayerController.TAG, "onMessageReceived: " + message);
 
         String[] coords = message.split(",");
 
         float otherX = Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH;
         float otherY = Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT;
 
-        Gdx.app.log(MultiplayerController.TAG, "Calibration after receiving: " + otherX + ", " + otherY);
+//        Gdx.app.log(MultiplayerController.TAG, "Calibration after receiving: " + otherX + ", " + otherY);
 
         switch(gameClient.getPlayerNumber()) {
             case PLAYER1:
@@ -238,6 +227,12 @@ public class GameScreen implements Screen, GameListener {
                 break;
             case PLAYER2:
                 player1.update(otherX, otherY);
+                puck.update(
+                        Double.parseDouble(coords[2]) * SCREEN_WIDTH / GAME_WIDTH,
+                        Double.parseDouble(coords[3]) * SCREEN_HEIGHT / GAME_HEIGHT,
+                        Double.parseDouble(coords[4]),
+                        Double.parseDouble(coords[5])
+                );
                 break;
         }
     }
@@ -247,7 +242,7 @@ public class GameScreen implements Screen, GameListener {
         return mController;
     }
 
-    class Puck {
+    private class Puck {
         public Vector2d velocity = new Vector2d(0, 0);
         public double x, y;
         public int radius = 30/2;
@@ -326,6 +321,14 @@ public class GameScreen implements Screen, GameListener {
             }
         }
 
+        void update(double newX, double newY, double i, double j) {
+            velocity.i = i;
+            velocity.j = j;
+
+            x = newX;
+            y = newY;
+        }
+
         void reset() {
             velocity.i = 0;
             velocity.j = 0;
@@ -345,7 +348,7 @@ public class GameScreen implements Screen, GameListener {
         }
     }
 
-    class Player {
+    private class Player {
         public int score = 0;
         public Vector2d velocity = new Vector2d(0,0);
         int radius = 70/2;

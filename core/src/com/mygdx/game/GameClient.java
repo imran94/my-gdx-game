@@ -99,7 +99,6 @@ abstract public class GameClient implements GameClientInterface {
     protected class ReceiveThread implements Runnable {
         public void run() {
             while (isConnected()) {
-                MainMenuScreen.debugText = "isConnected";
                 try {
                     ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
                     String message = ois.readUTF();

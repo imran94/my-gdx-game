@@ -31,6 +31,7 @@ public class MyClient extends GameClient {
             Runnable task = new ConnectThread(subnet + i);
             pool.submit(task);
         }
+        MainMenuScreen.debugText = "Looking for servers...";
         pool.shutdown();
 
         while (!isConnected() && !pool.isTerminated()) {}
@@ -90,8 +91,9 @@ public class MyClient extends GameClient {
                 if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
 
                 Gdx.app.log("mygdxgame", "Successfully connected to " + subnet);
-                MainMenuScreen.debugText = "Thread successfully connected to " + subnet;
+                MainMenuScreen.debugText = "Successfully connected to " + subnet;
             } catch (IOException io) {
+                MainMenuScreen.debugText += "\nConnection to " + subnet + " failed";
             }
         }
     }

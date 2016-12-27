@@ -58,9 +58,6 @@ abstract public class GameClient implements GameClientInterface {
 
     @Override
     public void sendMessage(String message) {
-//        Thread t = new Thread(new MessageThread(message));
-//        t.start();
-
         try {
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeUTF(message);

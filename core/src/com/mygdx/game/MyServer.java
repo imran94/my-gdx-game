@@ -3,6 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
@@ -29,14 +30,21 @@ public class MyServer extends GameClient {
 
                 serverSocket = new ServerSocket(GameClient.port);
                 MainMenuScreen.debugText = "Created server at " + localAddress + " on port no. " + GameClient.port + "\n";
+
                 socket = serverSocket.accept();
-                serverSocket.close();
                 MainMenuScreen.debugText = "Connected to socket " + socket.getInetAddress();
 
+                dgSocket = new DatagramSocket(datagramPort, socket.getLocalAddress());
+
                 keepAlive = false;
-                Thread t = new Thread(new ReceiveThread());
-                t.start();
+                Thread receiveThread = new Thread(new ReceiveThread());
+                receiveThread.start();
+
+                Thread voiceReceiveThread = new Thread(new VoiceReceiveThread());
+                voiceReceiveThread.start();
+
                 callback.onConnected();
+                serverSocket.close();
 
             } catch (IOException io) {
                 MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
@@ -48,10 +56,10 @@ public class MyServer extends GameClient {
     @Override
     public void disconnect() {
         try {
-            serverSocket.close();
             socket.close();
+            dgSocket.close();
         } catch(IOException io) {
-            callback.getDeviceAPI().log("Unable to close server. " + io.getMessage());
+            callback.getDeviceAPI().log("Unable to close socket. " + io.getMessage());
         }
 
         onDisconnected();

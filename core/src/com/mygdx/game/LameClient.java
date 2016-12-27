@@ -41,7 +41,7 @@ public class LameClient implements GameClientInterface {
     }
 
     @Override
-    public void sendMessage(byte[] message) {
+    public void sendVoiceMessage(byte[] message) {
 
     }
 

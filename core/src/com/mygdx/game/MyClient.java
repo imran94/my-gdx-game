@@ -3,6 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -41,8 +42,12 @@ public class MyClient extends GameClient {
 
             MainMenuScreen.debugText = "Successfully connected to " + socket.getInetAddress();
 
-            receiveThread = new Thread(new ReceiveThread());
+            Thread receiveThread = new Thread(new ReceiveThread());
             receiveThread.start();
+
+            Thread voiceReceiveThread = new Thread(new VoiceReceiveThread());
+            voiceReceiveThread.start();
+
             callback.onConnected();
         } else {
             callback.onConnectionFailed();
@@ -51,6 +56,13 @@ public class MyClient extends GameClient {
 
     @Override
     public void disconnect() {
+        try {
+            socket.close();
+            dgSocket.close();
+        } catch(IOException io) {
+            callback.getDeviceAPI().log("Unable to close socket. " + io.getMessage());
+        }
+
         onDisconnected();
     }
 
@@ -87,7 +99,12 @@ public class MyClient extends GameClient {
 //
 //                SocketAddress address = new InetSocketAddress(subnet, GameClient.port);
 //                s.connect(address);
+
+                dgSocket = new DatagramSocket(datagramPort, s.getLocalAddress());
+                if(!dgSocket.getReuseAddress()) dgSocket.setReuseAddress(true);
+
                 socket = s;
+                if (!socket.getReuseAddress()) socket.setReuseAddress(true);
                 if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
 
                 Gdx.app.log("mygdxgame", "Successfully connected to " + subnet);

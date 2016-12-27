@@ -88,7 +88,6 @@ public class GameScreen implements Screen, GameListener {
         player2.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
 
         touchPoint = new Vector3();
-
     }
 
     public void setGameClient(GameClientInterface gameClient) {
@@ -167,6 +166,9 @@ public class GameScreen implements Screen, GameListener {
                             touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
                     break;
             }
+
+            String s = touchPoint.x + ", " + touchPoint.y;
+            gameClient.sendVoiceMessage(s.getBytes());
         }
 
         if (gameClient.getPlayerNumber() == PLAYER1) {

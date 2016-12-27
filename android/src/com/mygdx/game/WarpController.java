@@ -122,7 +122,7 @@ public class WarpController implements MultiplayerController {
                 while (callback.isConnected()) {
                     if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         recorderBufSize = recorder.read(buffer, 0, buffer.length);
-                        callback.sendMessage(buffer);
+//                        callback.sendMessage(buffer);
                     }
                 }
             } catch (Throwable t) {

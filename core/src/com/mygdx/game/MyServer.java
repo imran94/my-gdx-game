@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -47,11 +49,22 @@ public class MyServer extends GameClient {
     public void disconnect() {
         try {
             serverSocket.close();
+            socket.close();
         } catch(IOException io) {
             callback.getDeviceAPI().log("Unable to close server. " + io.getMessage());
         }
 
         onDisconnected();
+    }
+
+    @Override
+    public void cancel() {
+        keepAlive = false;
+        try {
+            serverSocket.close();
+        } catch (IOException io) {
+            Gdx.app.log(MultiplayerController.TAG, "Failed to close server: " + io.toString());
+        }
     }
 
     @Override

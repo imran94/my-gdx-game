@@ -16,6 +16,7 @@ public interface GameClientInterface extends Runnable {
     void sendMessage(String message);
     void sendMessage(byte[] message);
     int getPlayerNumber();
+    void cancel();
 
     @Override
     void run();

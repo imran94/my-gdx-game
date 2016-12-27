@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
  */
 public class MyClient extends GameClient {
 
+    ExecutorService pool;
+
     public MyClient(GameListener callback, String localAddress) {
         super (callback, localAddress);
     }
@@ -22,13 +24,14 @@ public class MyClient extends GameClient {
     public void run() {
         int bitCount = 254;
 
-        ExecutorService pool = Executors.newFixedThreadPool(bitCount);
+        pool = Executors.newFixedThreadPool(bitCount);
 
         String subnet = getLocalSubnet();
         for (int i = 0; i <= bitCount; i++) {
             Runnable task = new ConnectThread(subnet + i);
             pool.submit(task);
         }
+        MainMenuScreen.debugText = "Looking for servers...";
         pool.shutdown();
 
         while (!isConnected() && !pool.isTerminated()) {}
@@ -56,6 +59,19 @@ public class MyClient extends GameClient {
         return GameListener.PLAYER2;
     }
 
+    @Override
+    public void cancel() {
+        if (isConnected()) {
+            try {
+                socket.close();
+            } catch (IOException io) {
+                Gdx.app.log(MultiplayerController.TAG, "Failed to close socket: " + io.toString());
+            }
+        }
+
+        if (!pool.isTerminated()) pool.shutdownNow();
+    }
+
     private class ConnectThread implements Runnable {
 
         String subnet;
@@ -75,8 +91,9 @@ public class MyClient extends GameClient {
                 if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
 
                 Gdx.app.log("mygdxgame", "Successfully connected to " + subnet);
-                MainMenuScreen.debugText = "Thread successfully connected to " + subnet;
+                MainMenuScreen.debugText = "Successfully connected to " + subnet;
             } catch (IOException io) {
+                MainMenuScreen.debugText += "\nConnection to " + subnet + " failed";
             }
         }
     }

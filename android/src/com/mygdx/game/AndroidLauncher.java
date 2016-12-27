@@ -10,7 +10,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.mygdx.game.MyGdxGame;
-import com.shephertz.app42.gaming.multiplayer.client.WarpClient;
 
 public class AndroidLauncher extends AndroidApplication {
 	@Override

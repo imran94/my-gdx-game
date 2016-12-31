@@ -111,8 +111,7 @@ abstract public class GameClient implements GameClientInterface {
 
                     callback.onMessageReceived(message);
                 } catch (Exception io) {
-                    MainMenuScreen.debugText += "\n" + io.getMessage();
-                    Gdx.app.log("mygdxgame", io.getMessage());
+                    Gdx.app.log(MultiplayerController.TAG, io.getMessage());
                 }
             }
 
@@ -141,3 +140,4 @@ abstract public class GameClient implements GameClientInterface {
         }
     }
 }
+ 

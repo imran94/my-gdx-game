@@ -14,6 +14,9 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Administrator on 15-Nov-16.
  */
@@ -44,6 +47,8 @@ public class GameScreen implements Screen, GameListener {
 
     private float offset = 70;
 
+    Map<Integer, Sprite> spriteMap;
+
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
         this.mController = mController;
@@ -73,6 +78,11 @@ public class GameScreen implements Screen, GameListener {
         SCREEN_WIDTH = Gdx.graphics.getWidth();
         SCREEN_HEIGHT = Gdx.graphics.getHeight();
 
+        spriteMap = new HashMap<Integer, Sprite>();
+        for (int i = 0; i < 10; i++) {
+            spriteMap.put(i, new Sprite(new Texture(i + ".png")));
+        }
+
         img = new Texture("Board2.png");
         background = new TextureRegion(img, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         backgroundSprite = new Sprite(img);
@@ -87,8 +97,14 @@ public class GameScreen implements Screen, GameListener {
         player1.setPosition(SCREEN_WIDTH / 2, offset);
         player2.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
 
-        touchPoint = new Vector3();
+//        player1.score = 10;
+//        player1.updateScore();
+//        player2.score = 20;
+//        player2.updateScore();
+//        setPlayer1ScorePosition();
+//        setPlayer2ScorePosition();
 
+        touchPoint = new Vector3();
     }
 
     public void setGameClient(GameClientInterface gameClient) {
@@ -117,6 +133,7 @@ public class GameScreen implements Screen, GameListener {
 
         batch.begin();
             draw();
+            drawScores();
             drawPaddle1();
             drawPaddle2();
             drawPuck();
@@ -125,6 +142,40 @@ public class GameScreen implements Screen, GameListener {
 
     public void draw() {
         backgroundSprite.draw(batch);
+    }
+
+    public void drawScores() {
+        player2.score1.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset);
+        player2.score1.draw(batch);
+
+        player2.score2.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
+        player2.score2.draw(batch);
+
+        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
+        player1.score1.setPosition(scoreHorizontalOffset,
+                score2Offset - player1.score1.getHeight());
+        player1.score1.draw(batch);
+
+        player1.score2.setPosition(scoreHorizontalOffset,
+                score2Offset);
+        player1.score2.draw(batch);
+    }
+
+    void setPlayer1ScorePosition() {
+        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
+        player1.score1.setPosition(scoreHorizontalOffset,
+                score2Offset - player1.score1.getHeight());
+        player1.score2.setPosition(scoreHorizontalOffset,
+                score2Offset);
+    }
+
+    void setPlayer2ScorePosition() {
+        player2.score1.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset);
+        player2.score2.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
     }
 
     public void drawPaddle1() {
@@ -242,6 +293,9 @@ public class GameScreen implements Screen, GameListener {
         return mController;
     }
 
+    float scoreVerticalOffset = 40;
+    float scoreHorizontalOffset = 40;
+
     private class Puck {
         public Vector2d velocity = new Vector2d(0, 0);
         public double x, y;
@@ -302,6 +356,10 @@ public class GameScreen implements Screen, GameListener {
                 // goal
                 if (x >= leftBound && x <= rightBound) {
                     reset();
+
+                    player2.score++;
+                    player2.updateScore();
+//                    setPlayer2ScorePosition();
                 } else {
                     velocity.j = Math.abs(velocity.j);
                     y = radius;
@@ -314,6 +372,10 @@ public class GameScreen implements Screen, GameListener {
                 //goal
                 if (x >= leftBound && x <= rightBound) {
                     reset();
+
+                    player1.score++;
+                    player1.updateScore();
+//                    setPlayer1ScorePosition();
                 } else {
                     velocity.j = -Math.abs(velocity.j);
                     y = SCREEN_HEIGHT - radius;
@@ -350,6 +412,9 @@ public class GameScreen implements Screen, GameListener {
 
     private class Player {
         public int score = 0;
+
+        Sprite score1, score2;
+
         public Vector2d velocity = new Vector2d(0,0);
         int radius = 70/2;
         public double x = 0;
@@ -366,6 +431,9 @@ public class GameScreen implements Screen, GameListener {
 
             playerSprite.setSize(radius * 2,
                     radius * 2);
+
+            score1 = spriteMap.get(0);
+            score2 = spriteMap.get(0);
         }
 
         public float getWidth() {return playerSprite.getWidth();}
@@ -386,6 +454,11 @@ public class GameScreen implements Screen, GameListener {
             velocity.j = y - this.y;
             this.x = x;
             this.y = y;
+        }
+
+        public void updateScore() {
+            score1 = spriteMap.get(score / 10);
+            score2 = spriteMap.get(score % 10);
         }
     }
 

@@ -3,10 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -55,18 +52,6 @@ public class MyClient extends GameClient {
     }
 
     @Override
-    public void disconnect() {
-        try {
-            socket.close();
-            dgSocket.close();
-        } catch(IOException io) {
-            callback.getDeviceAPI().log("Unable to close socket. " + io.getMessage());
-        }
-
-        onDisconnected();
-    }
-
-    @Override
     public int getPlayerNumber() {
         return GameListener.PLAYER2;
     }
@@ -81,36 +66,33 @@ public class MyClient extends GameClient {
             }
         }
 
-        if (!pool.isTerminated()) pool.shutdownNow();
+        if (pool != null && pool.isShutdown() && !pool.isTerminated()) pool.shutdownNow();
     }
 
     private class ConnectThread implements Runnable {
 
-        String subnet;
+        String address;
 
-        public ConnectThread(String subnet) {
-            this.subnet = subnet;
+        public ConnectThread(String address) {
+            this.address = address;
         }
 
         public void run() {
             try {
-                Socket s = new Socket(subnet, GameClient.port);
-//                s.setReuseAddress(true);
-//
-//                SocketAddress address = new InetSocketAddress(subnet, GameClient.port);
-//                s.connect(address);
+                Socket s = new Socket(address, port);
 
-                dgSocket = new DatagramSocket(datagramPort, s.getLocalAddress());
-                if(!dgSocket.getReuseAddress()) dgSocket.setReuseAddress(true);
+                voiceSocket = new Socket(s.getLocalAddress(), voicePort);
+                if (!voiceSocket.getReuseAddress()) voiceSocket.setReuseAddress(true);
+                if (!voiceSocket.getTcpNoDelay()) voiceSocket.setTcpNoDelay(true);
 
                 socket = s;
                 if (!socket.getReuseAddress()) socket.setReuseAddress(true);
                 if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
 
-                Gdx.app.log("mygdxgame", "Successfully connected to " + subnet);
-                MainMenuScreen.debugText = "Successfully connected to " + subnet;
+                Gdx.app.log("mygdxgame", "Successfully connected to " + address);
+                MainMenuScreen.debugText = "Successfully connected to " + address;
             } catch (IOException io) {
-                MainMenuScreen.debugText += "\nConnection to " + subnet + " failed";
+                MainMenuScreen.debugText += "\nConnection to " + address + " failed";
             }
         }
     }

@@ -15,4 +15,6 @@ public interface MultiplayerController {
     void startRecording();
     void setCallback(GameClientInterface callback);
     void transmit(byte[] message, int bufferSize);
+
+    int getBufferSize();
 }

@@ -26,11 +26,6 @@ public class LameClient implements GameClientInterface {
     }
 
     @Override
-    public void onDisconnected() {
-
-    }
-
-    @Override
     public void setListener(GameListener callback) {
 
     }

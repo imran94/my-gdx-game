@@ -93,6 +93,15 @@ public class WarpController implements MultiplayerController {
     int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
     int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
 
+    int minBufferSize = 0;
+    int recorderBufSize = 0;
+
+    @Override
+    public int getBufferSize() {
+        return Math.max(minBufferSize, recorderBufSize);
+    }
+
+
     public void getValidSampleRates() {
         for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
             int bufferSize = AudioRecord.getMinBufferSize(rate, recordChannelConfig, audioFormat);
@@ -107,9 +116,9 @@ public class WarpController implements MultiplayerController {
         byte[] buffer;
 
         public void run() {
-                int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
-                int recorderBufSize = Math.max(minBufferSize, maxBufferSize);
-                buffer = new byte[recorderBufSize];
+            minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
+            recorderBufSize = Math.max(minBufferSize, maxBufferSize);
+            buffer = new byte[recorderBufSize];
 
             try {
                 speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, recorderBufSize, AudioTrack.MODE_STREAM);
@@ -122,7 +131,7 @@ public class WarpController implements MultiplayerController {
                 while (callback.isConnected()) {
                     if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         recorderBufSize = recorder.read(buffer, 0, buffer.length);
-//                        callback.sendMessage(buffer);
+                        callback.sendVoiceMessage(buffer);
                     }
                 }
             } catch (Throwable t) {

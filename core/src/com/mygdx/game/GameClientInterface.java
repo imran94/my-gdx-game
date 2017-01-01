@@ -7,12 +7,11 @@ import java.net.Socket;
  */
 public interface GameClientInterface extends Runnable {
     int port = 45351;
-    int datagramPort = 45354;
+    int voicePort = 45365;
 
     boolean isConnected();
     void onConnected();
     void disconnect();
-    void onDisconnected();
     void setListener(GameListener callback);
     void sendMessage(String message);
     void sendVoiceMessage(byte[] message);

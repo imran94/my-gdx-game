@@ -78,10 +78,13 @@ public class WarpController implements MultiplayerController {
 
     @Override
     public void transmit(byte[] message, int bufferSize) {
-        recorder.stop();
-
-        Thread t = new Thread(new SpeakerThread(message, bufferSize));
-        t.start();
+        if (recorder != null && speaker != null) {
+            recorder.stop();
+            speaker.write(message, 0, bufferSize);
+            recorder.startRecording();
+//            Thread t = new Thread(new SpeakerThread(message, bufferSize));
+//            t.start();
+        }
     }
 
     final int maxBufferSize = 4096;
@@ -126,7 +129,11 @@ public class WarpController implements MultiplayerController {
                 Log.d(TAG, "Recorder created");
 
                 recorder.startRecording();
+                Log.d(TAG, "Started recording");
+
                 speaker.play();
+                Log.d(TAG, "Speaker playing");
+
 
                 while (callback.isConnected()) {
                     if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
@@ -168,28 +175,28 @@ public class WarpController implements MultiplayerController {
         public void run() {
 //            if (speaker.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) return;
 
-            int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
+//            int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
 //            speaker.play();
-            speaker.write(buffer, 0, bufferSize);
-            recorder.startRecording();
+//            speaker.write(buffer, 0, bufferSize);
+//            recorder.startRecording();
 //            speaker.stop();
-            if (playing) return;
+//            if (playing) return;
 
-            playing = true;
+//            playing = true;
 
-            try {
-                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
-                Log.d(TAG, "Speaker initialised");
-                speaker.play();
-                speaker.write(buffer, 0, minBufSize);
+//            try {
+//                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
+//                Log.d(TAG, "Speaker initialised");
+//                speaker.play();
+                speaker.write(buffer, 0, bufferSize);
                 Log.d(TAG, "Writing to speaker");
-            } catch (Throwable t) {
-                Log.d(TAG, "Error: " + t.getMessage());
-            } finally {
-                speaker.release();
-                Log.d(TAG, "Released speaker");
-            }
-            playing = false;
+//            } catch (Throwable t) {
+//                Log.d(TAG, "Error: " + t.getMessage());
+//            } finally {
+//                speaker.release();
+//                Log.d(TAG, "Released speaker");
+//            }
+//            playing = false;
         }
     }
 }

@@ -81,9 +81,13 @@ public class MyClient extends GameClient {
             try {
                 Socket s = new Socket(address, port);
 
-                voiceSocket = new Socket(s.getLocalAddress(), voicePort);
-                if (!voiceSocket.getReuseAddress()) voiceSocket.setReuseAddress(true);
-                if (!voiceSocket.getTcpNoDelay()) voiceSocket.setTcpNoDelay(true);
+                try {
+                    voiceSocket = new Socket(address, voicePort);
+                    if (!voiceSocket.getReuseAddress()) voiceSocket.setReuseAddress(true);
+                    if (!voiceSocket.getTcpNoDelay()) voiceSocket.setTcpNoDelay(true);
+                } catch (Exception e) {
+                    Gdx.app.log("mygdxgame", "VoiceSocket failed: " + e.toString());
+                }
 
                 socket = s;
                 if (!socket.getReuseAddress()) socket.setReuseAddress(true);

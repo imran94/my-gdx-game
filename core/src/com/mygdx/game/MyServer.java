@@ -37,7 +37,6 @@ public class MyServer extends GameClient {
                 Thread t = new Thread(new ReceiveThread());
                 t.start();
                 callback.onConnected();
-
             } catch (IOException io) {
                 MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
                 callback.onConnectionFailed();

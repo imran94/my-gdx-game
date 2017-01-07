@@ -29,25 +29,24 @@ public class GameScreen implements Screen, GameListener {
     private OrthographicCamera guiCam;
     private SpriteBatch batch;
     private Vector3 touchPoint;
-
     private Texture img;
     private TextureRegion background;
     private Sprite backgroundSprite;
 
     private Puck puck;
-   	private Player player1, player2;
+   	private Player myPlayer, otherPlayer;
     private Player[] players;
-
-    private Viewport gamePort;
 
     private final int GAME_WIDTH = 320;
     private final int GAME_HEIGHT = 480;
-
     private int SCREEN_WIDTH, SCREEN_HEIGHT;
 
     private float offset = 70;
+    private float scoreVerticalOffset = 40, scoreHorizontalOffset = 40;
 
-    Map<Integer, Sprite> spriteMap;
+    private Map<Integer, Sprite> spriteMap;
+
+    private boolean yDown;
 
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
@@ -68,8 +67,10 @@ public class GameScreen implements Screen, GameListener {
 
     public void createGame() {
         guiCam = new OrthographicCamera();
-        gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
-        guiCam.setToOrtho(false);
+        Viewport gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
+        yDown = gameClient.getPlayerNumber() != PLAYER1;
+        guiCam.setToOrtho(yDown);
+
         guiCam.position.set(0, 0, 0);
 
         batch = new SpriteBatch();
@@ -89,13 +90,19 @@ public class GameScreen implements Screen, GameListener {
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         puck = new Puck();
-        player1 = new Player();
-        player2 = new Player();
+        myPlayer = new Player();
+        otherPlayer = new Player();
 
         offset = offset * SCREEN_HEIGHT / GAME_HEIGHT;
 
-        player1.setPosition(SCREEN_WIDTH / 2, offset);
-        player2.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+        if(!yDown) {
+            myPlayer.setPosition(SCREEN_WIDTH / 2, offset);
+            otherPlayer.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+        } else {
+            myPlayer.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+            otherPlayer.setPosition(SCREEN_WIDTH / 2, offset);
+            scoreVerticalOffset = -scoreVerticalOffset;
+        }
 
 //        player1.score = 10;
 //        player1.updateScore();
@@ -145,46 +152,29 @@ public class GameScreen implements Screen, GameListener {
     }
 
     public void drawScores() {
-        player2.score1.setPosition(scoreHorizontalOffset,
+        otherPlayer.score1.setPosition(scoreHorizontalOffset,
                 SCREEN_HEIGHT / 2 + scoreVerticalOffset);
-        player2.score1.draw(batch);
+        otherPlayer.score1.draw(batch);
 
-        player2.score2.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
-        player2.score2.draw(batch);
-
-        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
-        player1.score1.setPosition(scoreHorizontalOffset,
-                score2Offset - player1.score1.getHeight());
-        player1.score1.draw(batch);
-
-        player1.score2.setPosition(scoreHorizontalOffset,
-                score2Offset);
-        player1.score2.draw(batch);
-    }
-
-    void setPlayer1ScorePosition() {
-        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
-        player1.score1.setPosition(scoreHorizontalOffset,
-                score2Offset - player1.score1.getHeight());
-        player1.score2.setPosition(scoreHorizontalOffset,
-                score2Offset);
-    }
-
-    void setPlayer2ScorePosition() {
-        player2.score1.setPosition(scoreHorizontalOffset,
+        otherPlayer.score2.setPosition(scoreHorizontalOffset + otherPlayer.score1.getWidth(),
                 SCREEN_HEIGHT / 2 + scoreVerticalOffset);
-        player2.score2.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
+        otherPlayer.score2.draw(batch);
+
+        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset;
+        myPlayer.score1.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 - scoreVerticalOffset);
+        myPlayer.score1.draw(batch);
+
+        myPlayer.score2.setPosition(scoreHorizontalOffset + otherPlayer.score1.getWidth(),
+                SCREEN_HEIGHT / 2 - scoreVerticalOffset);
+        myPlayer.score2.draw(batch);
     }
 
     public void drawPaddle1() {
-        player1.draw();
+        myPlayer.draw();
     }
 
-    public void drawPaddle2() {
-        player2.draw();
-    }
+    public void drawPaddle2() { otherPlayer.draw(); }
 
     public void drawPuck() {
         puck.draw();
@@ -202,35 +192,30 @@ public class GameScreen implements Screen, GameListener {
 
 //            Gdx.app.log(MultiplayerController.TAG, "isTouched: " + touchPoint.x + ", " + touchPoint.y);
 
-            switch (gameClient.getPlayerNumber()) {
-                case PLAYER1:
-                    if (touchPoint.y >= SCREEN_HEIGHT / 2)
-                        touchPoint.y = SCREEN_HEIGHT / 2;
+            if ((yDown && touchPoint.y <= SCREEN_HEIGHT / 2)
+            || (!yDown && touchPoint.y >= SCREEN_HEIGHT / 2)) {
+                touchPoint.y = SCREEN_HEIGHT / 2;
+            }
 
-                    player1.update(touchPoint.x, touchPoint.y);
-                    break;
-                case PLAYER2:
-                    if (touchPoint.y <= SCREEN_HEIGHT / 2)
-                        touchPoint.y = SCREEN_HEIGHT / 2;
+            myPlayer.update(touchPoint.x, touchPoint.y);
 
-                    player2.update(touchPoint.x, touchPoint.y);
-                    gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
-                            touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
-                    break;
+            if (gameClient.getPlayerNumber() == PLAYER2) {
+                gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
+                    touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
             }
         }
 
         if (gameClient.getPlayerNumber() == PLAYER1) {
-            gameClient.sendMessage(player1.x * GAME_WIDTH / SCREEN_WIDTH
-                    + "," + player1.y * GAME_HEIGHT / SCREEN_HEIGHT
+            gameClient.sendMessage(myPlayer.x * GAME_WIDTH / SCREEN_WIDTH
+                    + "," + myPlayer.y * GAME_HEIGHT / SCREEN_HEIGHT
                     + "," + puck.x * GAME_WIDTH / SCREEN_WIDTH
                     + "," + puck.y * GAME_HEIGHT / SCREEN_HEIGHT
                     + "," + puck.velocity.i + "," + puck.velocity.j
             );
         }
 
-        checkCollision(player1, puck);
-        checkCollision(player2, puck);
+        checkCollision(myPlayer, puck);
+        checkCollision(otherPlayer, puck);
     }
 
     public void checkCollision(Player player, Puck puck) {
@@ -242,7 +227,6 @@ public class GameScreen implements Screen, GameListener {
             puck.x = (puck.x-player.x)*(puck.radius+player.radius)/distance+player.x;
             puck.y = (puck.y-player.y)*(puck.radius+player.radius)/distance+player.y;
         }
-
     }
 
     @Override
@@ -267,24 +251,18 @@ public class GameScreen implements Screen, GameListener {
 
         String[] coords = message.split(",");
 
-        float otherX = Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH;
-        float otherY = Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT;
-
 //        Gdx.app.log(MultiplayerController.TAG, "Calibration after receiving: " + otherX + ", " + otherY);
 
-        switch(gameClient.getPlayerNumber()) {
-            case PLAYER1:
-                player2.update(otherX, otherY);
-                break;
-            case PLAYER2:
-                player1.update(otherX, otherY);
-                puck.update(
-                        Double.parseDouble(coords[2]) * SCREEN_WIDTH / GAME_WIDTH,
-                        Double.parseDouble(coords[3]) * SCREEN_HEIGHT / GAME_HEIGHT,
-                        Double.parseDouble(coords[4]),
-                        Double.parseDouble(coords[5])
-                );
-                break;
+        otherPlayer.update(SCREEN_WIDTH - Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH,
+                Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT);
+
+        if (gameClient.getPlayerNumber() == PLAYER2) {
+            puck.update(
+                    SCREEN_WIDTH - Double.parseDouble(coords[2]) * SCREEN_WIDTH / GAME_WIDTH,
+                    Double.parseDouble(coords[3]) * SCREEN_HEIGHT / GAME_HEIGHT,
+                    Double.parseDouble(coords[4]),
+                    Double.parseDouble(coords[5])
+            );
         }
     }
 
@@ -292,9 +270,6 @@ public class GameScreen implements Screen, GameListener {
     public MultiplayerController getDeviceAPI() {
         return mController;
     }
-
-    float scoreVerticalOffset = 40;
-    float scoreHorizontalOffset = 40;
 
     private class Puck {
         public Vector2d velocity = new Vector2d(0, 0);
@@ -357,8 +332,13 @@ public class GameScreen implements Screen, GameListener {
                 if (x >= leftBound && x <= rightBound) {
                     reset();
 
-                    player2.score++;
-                    player2.updateScore();
+                    if (!yDown) {
+                        otherPlayer.score++;
+                        otherPlayer.updateScore();
+                    } else {
+                        myPlayer.score++;
+                        myPlayer.updateScore();
+                    }
 //                    setPlayer2ScorePosition();
                 } else {
                     velocity.j = Math.abs(velocity.j);
@@ -366,15 +346,20 @@ public class GameScreen implements Screen, GameListener {
                 }
             }
 
-            // bounce off top
+            // bounce off top for Player 1 or bottom for Player 2
             if(y >= SCREEN_HEIGHT - radius){
 
                 //goal
                 if (x >= leftBound && x <= rightBound) {
                     reset();
 
-                    player1.score++;
-                    player1.updateScore();
+                    if (!yDown) {
+                        myPlayer.score++;
+                        myPlayer.updateScore();
+                    } else {
+                        otherPlayer.score++;
+                        otherPlayer.updateScore();
+                    }
 //                    setPlayer1ScorePosition();
                 } else {
                     velocity.j = -Math.abs(velocity.j);

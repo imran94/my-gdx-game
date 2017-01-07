@@ -81,7 +81,10 @@ public class GameScreen implements Screen, GameListener {
 
         spriteMap = new HashMap<Integer, Sprite>();
         for (int i = 0; i < 10; i++) {
-            spriteMap.put(i, new Sprite(new Texture(i + ".png")));
+            Sprite sprite = new Sprite(new Texture(i + ".png"));
+            sprite.setSize(sprite.getWidth() * SCREEN_WIDTH / GAME_WIDTH,
+                    sprite.getHeight() * SCREEN_HEIGHT / GAME_HEIGHT);
+            spriteMap.put(i, sprite);
         }
 
         img = new Texture("Board2.png");
@@ -94,6 +97,8 @@ public class GameScreen implements Screen, GameListener {
         otherPlayer = new Player();
 
         offset = offset * SCREEN_HEIGHT / GAME_HEIGHT;
+        scoreVerticalOffset = scoreVerticalOffset * SCREEN_HEIGHT / GAME_HEIGHT;
+        scoreHorizontalOffset = scoreHorizontalOffset * SCREEN_WIDTH / GAME_WIDTH;
 
         if(!yDown) {
             myPlayer.setPosition(SCREEN_WIDTH / 2, offset);
@@ -160,7 +165,6 @@ public class GameScreen implements Screen, GameListener {
                 SCREEN_HEIGHT / 2 + scoreVerticalOffset);
         otherPlayer.score2.draw(batch);
 
-        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset;
         myPlayer.score1.setPosition(scoreHorizontalOffset,
                 SCREEN_HEIGHT / 2 - scoreVerticalOffset);
         myPlayer.score1.draw(batch);
@@ -237,13 +241,11 @@ public class GameScreen implements Screen, GameListener {
     @Override
     public void onDisconnected() {
 //        mController.showNotification("Disconnected from game");
-        game.setScreen(new MainMenuScreen(game, mController));
+//        game.setScreen(new MainMenuScreen(game, mController));
     }
 
     @Override
-    public void onConnectionFailed() {
-
-    }
+    public void onConnectionFailed() {}
 
     @Override
     public void onMessageReceived(String message) {

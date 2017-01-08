@@ -214,8 +214,6 @@ public class MainMenuScreen implements Screen, GameListener {
     public void onConnected() {
         debugText = "Connected to socket";
         mController.setCallback(gameClient);
-//        mController.startRecording();
-//        mController.showNotification("Found game");
 
         Timer.schedule(new Timer.Task() {
             @Override

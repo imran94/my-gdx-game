@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -29,25 +30,24 @@ public class GameScreen implements Screen, GameListener {
     private OrthographicCamera guiCam;
     private SpriteBatch batch;
     private Vector3 touchPoint;
-
     private Texture img;
     private TextureRegion background;
     private Sprite backgroundSprite;
 
     private Puck puck;
-   	private Player player1, player2;
+   	private Player myPlayer, otherPlayer;
     private Player[] players;
-
-    private Viewport gamePort;
 
     private final int GAME_WIDTH = 320;
     private final int GAME_HEIGHT = 480;
-
     private int SCREEN_WIDTH, SCREEN_HEIGHT;
 
     private float offset = 70;
+    private float scoreVerticalOffset = 40, scoreHorizontalOffset = 15;
 
-    Map<Integer, Sprite> spriteMap;
+    private Map<Integer, Sprite> spriteMap;
+
+    private boolean yDown;
 
     public GameScreen(Game game, MultiplayerController mController) {
         this.game = game;
@@ -68,8 +68,10 @@ public class GameScreen implements Screen, GameListener {
 
     public void createGame() {
         guiCam = new OrthographicCamera();
-        gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
-        guiCam.setToOrtho(false);
+        Viewport gamePort = new StretchViewport(GAME_WIDTH, GAME_HEIGHT, guiCam);
+        yDown = gameClient.getPlayerNumber() != PLAYER1;
+        guiCam.setToOrtho(yDown);
+
         guiCam.position.set(0, 0, 0);
 
         batch = new SpriteBatch();
@@ -80,7 +82,15 @@ public class GameScreen implements Screen, GameListener {
 
         spriteMap = new HashMap<Integer, Sprite>();
         for (int i = 0; i < 10; i++) {
-            spriteMap.put(i, new Sprite(new Texture(i + ".png")));
+            Sprite sprite = new Sprite(new Texture(i + ".png"));
+
+            String s = i + ", " + "Width: " + sprite.getWidth() +
+                    ", height: " + sprite.getHeight();
+            Gdx.app.log(mController.TAG, s);
+
+            sprite.setSize(sprite.getWidth()/* * SCREEN_WIDTH / GAME_WIDTH*/,
+                    sprite.getHeight() /* SCREEN_HEIGHT / GAME_HEIGHT*/);
+            spriteMap.put(i, sprite);
         }
 
         img = new Texture("Board2.png");
@@ -89,13 +99,21 @@ public class GameScreen implements Screen, GameListener {
         backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         puck = new Puck();
-        player1 = new Player();
-        player2 = new Player();
+        myPlayer = new Player();
+        otherPlayer = new Player();
 
         offset = offset * SCREEN_HEIGHT / GAME_HEIGHT;
+        scoreVerticalOffset = scoreVerticalOffset * SCREEN_HEIGHT / GAME_HEIGHT;
+        scoreHorizontalOffset = scoreHorizontalOffset * SCREEN_WIDTH / GAME_WIDTH;
 
-        player1.setPosition(SCREEN_WIDTH / 2, offset);
-        player2.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+        if(!yDown) {
+            myPlayer.setPosition(SCREEN_WIDTH / 2, offset);
+            otherPlayer.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+        } else {
+            myPlayer.setPosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT - offset);
+            otherPlayer.setPosition(SCREEN_WIDTH / 2, offset);
+            scoreVerticalOffset = -scoreVerticalOffset;
+        }
 
 //        player1.score = 10;
 //        player1.updateScore();
@@ -145,46 +163,28 @@ public class GameScreen implements Screen, GameListener {
     }
 
     public void drawScores() {
-        player2.score1.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset);
-        player2.score1.draw(batch);
+        otherPlayer.score1.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset - otherPlayer.score1.getHeight());
+        otherPlayer.score1.draw(batch);
 
-        player2.score2.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
-        player2.score2.draw(batch);
+        otherPlayer.score2.setPosition(scoreHorizontalOffset * 1.1f + otherPlayer.score1.getWidth(),
+                SCREEN_HEIGHT / 2 + scoreVerticalOffset - otherPlayer.score2.getHeight());
+        otherPlayer.score2.draw(batch);
 
-        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
-        player1.score1.setPosition(scoreHorizontalOffset,
-                score2Offset - player1.score1.getHeight());
-        player1.score1.draw(batch);
+        myPlayer.score1.setPosition(scoreHorizontalOffset,
+                SCREEN_HEIGHT / 2 - scoreVerticalOffset);
+        myPlayer.score1.draw(batch);
 
-        player1.score2.setPosition(scoreHorizontalOffset,
-                score2Offset);
-        player1.score2.draw(batch);
-    }
-
-    void setPlayer1ScorePosition() {
-        float score2Offset = SCREEN_HEIGHT / 2 - scoreVerticalOffset - player1.score2.getHeight();
-        player1.score1.setPosition(scoreHorizontalOffset,
-                score2Offset - player1.score1.getHeight());
-        player1.score2.setPosition(scoreHorizontalOffset,
-                score2Offset);
-    }
-
-    void setPlayer2ScorePosition() {
-        player2.score1.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset);
-        player2.score2.setPosition(scoreHorizontalOffset,
-                SCREEN_HEIGHT / 2 + scoreVerticalOffset + player2.score1.getHeight());
+        myPlayer.score2.setPosition(scoreHorizontalOffset * 1.1f + otherPlayer.score1.getWidth(),
+                SCREEN_HEIGHT / 2 - scoreVerticalOffset);
+        myPlayer.score2.draw(batch);
     }
 
     public void drawPaddle1() {
-        player1.draw();
+        myPlayer.draw();
     }
 
-    public void drawPaddle2() {
-        player2.draw();
-    }
+    public void drawPaddle2() { otherPlayer.draw(); }
 
     public void drawPuck() {
         puck.draw();
@@ -202,35 +202,30 @@ public class GameScreen implements Screen, GameListener {
 
 //            Gdx.app.log(MultiplayerController.TAG, "isTouched: " + touchPoint.x + ", " + touchPoint.y);
 
-            switch (gameClient.getPlayerNumber()) {
-                case PLAYER1:
-                    if (touchPoint.y >= SCREEN_HEIGHT / 2)
-                        touchPoint.y = SCREEN_HEIGHT / 2;
+            if ((yDown && touchPoint.y <= SCREEN_HEIGHT / 2)
+            || (!yDown && touchPoint.y >= SCREEN_HEIGHT / 2)) {
+                touchPoint.y = SCREEN_HEIGHT / 2;
+            }
 
-                    player1.update(touchPoint.x, touchPoint.y);
-                    break;
-                case PLAYER2:
-                    if (touchPoint.y <= SCREEN_HEIGHT / 2)
-                        touchPoint.y = SCREEN_HEIGHT / 2;
+            myPlayer.update(touchPoint.x, touchPoint.y);
 
-                    player2.update(touchPoint.x, touchPoint.y);
-                    gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
-                            touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
-                    break;
+            if (gameClient.getPlayerNumber() == PLAYER2) {
+                gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
+                    touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
             }
         }
 
         if (gameClient.getPlayerNumber() == PLAYER1) {
-            gameClient.sendMessage(player1.x * GAME_WIDTH / SCREEN_WIDTH
-                    + "," + player1.y * GAME_HEIGHT / SCREEN_HEIGHT
+            gameClient.sendMessage(myPlayer.x * GAME_WIDTH / SCREEN_WIDTH
+                    + "," + myPlayer.y * GAME_HEIGHT / SCREEN_HEIGHT
                     + "," + puck.x * GAME_WIDTH / SCREEN_WIDTH
                     + "," + puck.y * GAME_HEIGHT / SCREEN_HEIGHT
                     + "," + puck.velocity.i + "," + puck.velocity.j
             );
         }
 
-        checkCollision(player1, puck);
-        checkCollision(player2, puck);
+        checkCollision(myPlayer, puck);
+        checkCollision(otherPlayer, puck);
     }
 
     public void checkCollision(Player player, Puck puck) {
@@ -242,7 +237,6 @@ public class GameScreen implements Screen, GameListener {
             puck.x = (puck.x-player.x)*(puck.radius+player.radius)/distance+player.x;
             puck.y = (puck.y-player.y)*(puck.radius+player.radius)/distance+player.y;
         }
-
     }
 
     @Override
@@ -253,13 +247,11 @@ public class GameScreen implements Screen, GameListener {
     @Override
     public void onDisconnected() {
 //        mController.showNotification("Disconnected from game");
-        game.setScreen(new MainMenuScreen(game, mController));
+//        game.setScreen(new MainMenuScreen(game, mController));
     }
 
     @Override
-    public void onConnectionFailed() {
-
-    }
+    public void onConnectionFailed() {}
 
     @Override
     public void onMessageReceived(String message) {
@@ -267,24 +259,18 @@ public class GameScreen implements Screen, GameListener {
 
         String[] coords = message.split(",");
 
-        float otherX = Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH;
-        float otherY = Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT;
-
 //        Gdx.app.log(MultiplayerController.TAG, "Calibration after receiving: " + otherX + ", " + otherY);
 
-        switch(gameClient.getPlayerNumber()) {
-            case PLAYER1:
-                player2.update(otherX, otherY);
-                break;
-            case PLAYER2:
-                player1.update(otherX, otherY);
-                puck.update(
-                        Double.parseDouble(coords[2]) * SCREEN_WIDTH / GAME_WIDTH,
-                        Double.parseDouble(coords[3]) * SCREEN_HEIGHT / GAME_HEIGHT,
-                        Double.parseDouble(coords[4]),
-                        Double.parseDouble(coords[5])
-                );
-                break;
+        otherPlayer.update(SCREEN_WIDTH - Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH,
+                Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT);
+
+        if (gameClient.getPlayerNumber() == PLAYER2) {
+            puck.update(
+                    SCREEN_WIDTH - Double.parseDouble(coords[2]) * SCREEN_WIDTH / GAME_WIDTH,
+                    Double.parseDouble(coords[3]) * SCREEN_HEIGHT / GAME_HEIGHT,
+                    Double.parseDouble(coords[4]),
+                    Double.parseDouble(coords[5])
+            );
         }
     }
 
@@ -292,9 +278,6 @@ public class GameScreen implements Screen, GameListener {
     public MultiplayerController getDeviceAPI() {
         return mController;
     }
-
-    float scoreVerticalOffset = 40;
-    float scoreHorizontalOffset = 40;
 
     private class Puck {
         public Vector2d velocity = new Vector2d(0, 0);
@@ -305,6 +288,7 @@ public class GameScreen implements Screen, GameListener {
         int rightBound = 220;
 
         Sprite puckSprite;
+        Sound edgeHitSound, playerHitSound, goalSound;
 
         public Puck() {
             radius = radius * SCREEN_WIDTH / GAME_WIDTH;
@@ -319,6 +303,10 @@ public class GameScreen implements Screen, GameListener {
 
             leftBound = leftBound * SCREEN_WIDTH / GAME_WIDTH;
             rightBound = rightBound * SCREEN_WIDTH / GAME_WIDTH;
+
+            edgeHitSound = Gdx.audio.newSound(Gdx.files.internal("EdgeHit.ogg"));
+            playerHitSound = Gdx.audio.newSound(Gdx.files.internal("PlayerHit.ogg"));
+            goalSound = Gdx.audio.newSound(Gdx.files.internal("Goal.ogg"));
         }
 
         public float getWidth() {return puckSprite.getWidth();}
@@ -342,12 +330,14 @@ public class GameScreen implements Screen, GameListener {
             if(x <= radius){
                 velocity.i = Math.abs(velocity.i); //bounce
                 x = radius;
+                edgeHitSound.play();
             }
 
             // bounce off right wall
             if(x >= SCREEN_WIDTH - radius){
                 velocity.i = -Math.abs(velocity.i);
                 x = SCREEN_WIDTH - radius;
+                edgeHitSound.play();
             }
 
             // bounce off bottom
@@ -355,30 +345,44 @@ public class GameScreen implements Screen, GameListener {
 
                 // goal
                 if (x >= leftBound && x <= rightBound) {
+                    goalSound.play();
                     reset();
 
-                    player2.score++;
-                    player2.updateScore();
+                    if (!yDown) {
+                        otherPlayer.score++;
+                        otherPlayer.updateScore();
+                    } else {
+                        myPlayer.score++;
+                        myPlayer.updateScore();
+                    }
 //                    setPlayer2ScorePosition();
                 } else {
                     velocity.j = Math.abs(velocity.j);
                     y = radius;
+                    edgeHitSound.play();
                 }
             }
 
-            // bounce off top
+            // bounce off top for Player 1 or bottom for Player 2
             if(y >= SCREEN_HEIGHT - radius){
 
                 //goal
                 if (x >= leftBound && x <= rightBound) {
+                    goalSound.play();
                     reset();
 
-                    player1.score++;
-                    player1.updateScore();
+                    if (!yDown) {
+                        myPlayer.score++;
+                        myPlayer.updateScore();
+                    } else {
+                        otherPlayer.score++;
+                        otherPlayer.updateScore();
+                    }
 //                    setPlayer1ScorePosition();
                 } else {
                     velocity.j = -Math.abs(velocity.j);
                     y = SCREEN_HEIGHT - radius;
+                    edgeHitSound.play();
                 }
             }
         }
@@ -401,6 +405,8 @@ public class GameScreen implements Screen, GameListener {
 
         public boolean checkCollision(Player p){
             if(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2) <= Math.pow(p.radius + radius, 2)){
+                playerHitSound.play();
+
                 Vector2d collisionDirection = new Vector2d(x-p.x, y-p.y);
                 velocity = p.velocity.proj(collisionDirection).plus(velocity.proj(collisionDirection).times(-1)
                         .plus(velocity.proj(new Vector2d(collisionDirection.j, -collisionDirection.i)))).times(0.9);
@@ -432,8 +438,7 @@ public class GameScreen implements Screen, GameListener {
             playerSprite.setSize(radius * 2,
                     radius * 2);
 
-            score1 = spriteMap.get(0);
-            score2 = spriteMap.get(0);
+            updateScore();
         }
 
         public float getWidth() {return playerSprite.getWidth();}

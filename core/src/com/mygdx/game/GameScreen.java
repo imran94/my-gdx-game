@@ -38,8 +38,6 @@ public class GameScreen implements Screen, GameListener {
    	private Player myPlayer, otherPlayer;
     private Player[] players;
 
-    private final int GAME_WIDTH = 320;
-    private final int GAME_HEIGHT = 480;
     private int SCREEN_WIDTH, SCREEN_HEIGHT;
 
     private float offset = 70;

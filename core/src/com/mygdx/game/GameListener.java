@@ -10,6 +10,9 @@ public interface GameListener {
     int PLAYER1 = 1;
     int PLAYER2 = 2;
 
+    int GAME_WIDTH = 320;
+    int GAME_HEIGHT = 480;
+
     void onConnected();
     void onDisconnected();
 

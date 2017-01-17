@@ -11,8 +11,8 @@ import java.net.Socket;
  */
 public class MyServer extends GameClient {
 
-    static ServerSocket serverSocket;
-    static ServerSocket voiceServer;
+    private static ServerSocket serverSocket;
+    private static ServerSocket voiceServer;
 
     public MyServer(GameListener callback, String localAddress) {
         super(callback, localAddress);
@@ -49,12 +49,9 @@ public class MyServer extends GameClient {
 
                 Thread t = new Thread(new ReceiveThread());
                 t.start();
-
                 callback.onConnected();
-                serverSocket.close();
-                MainMenuScreen.debugText = "Connected to socket " + socket.getInetAddress();
-            } catch (Exception io) {
-                Gdx.app.log(MultiplayerController.TAG, "NormalServer exception: " + io.toString());
+            } catch (IOException io) {
+                MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
                 callback.onConnectionFailed();
             }
         }

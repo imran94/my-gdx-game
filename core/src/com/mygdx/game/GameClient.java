@@ -128,14 +128,14 @@ abstract public class GameClient implements GameClientInterface {
             Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread started");
 
             while (isConnected()) {
-                callback.getDeviceAPI().startRecording();
+//                callback.getDeviceAPI().startRecording();
 
                 try {
                     byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
 
                     DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
                     dis.readFully(message);
-                    callback.getDeviceAPI().transmit(message, message.length);
+//                    callback.getDeviceAPI().transmit(message, message.length);
 
                     Gdx.app.log(MultiplayerController.TAG, "Voice message received");
                 } catch (IOException io) {

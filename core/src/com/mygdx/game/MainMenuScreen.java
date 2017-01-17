@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -26,13 +25,8 @@ public class MainMenuScreen implements Screen, GameListener {
 
     Game game;
 
-    Rectangle createBounds;
-    TextButton createButton;
-    Rectangle joinBounds;
-    TextButton joinButton;
-    Rectangle cancelBounds;
-    TextButton cancelButton;
-    ShapeRenderer shapeRenderer;
+    Rectangle createBounds, joinBounds, cancelBounds;
+    TextButton createButton, joinButton, cancelButton;
 
     OrthographicCamera guiCam;
     SpriteBatch batch;
@@ -49,12 +43,8 @@ public class MainMenuScreen implements Screen, GameListener {
 
     MultiplayerController mController;
 
-    int GAME_WIDTH = 320;
-    int GAME_HEIGHT = 480;
-
     public MainMenuScreen(Game game, MultiplayerController mController) {
         this.game = game;
-        shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
 
         guiCam = new OrthographicCamera(GAME_WIDTH, GAME_HEIGHT);
@@ -214,8 +204,6 @@ public class MainMenuScreen implements Screen, GameListener {
     public void onConnected() {
         debugText = "Connected to socket";
         mController.setCallback(gameClient);
-//        mController.startRecording();
-//        mController.showNotification("Found game");
 
         Timer.schedule(new Timer.Task() {
             @Override

@@ -211,6 +211,9 @@ public class GameScreen implements Screen, GameListener {
                 gameClient.sendMessage(touchPoint.x * GAME_WIDTH / SCREEN_WIDTH + "," +
                     touchPoint.y * GAME_HEIGHT / SCREEN_HEIGHT);
             }
+
+            String s = touchPoint.x + ", " + touchPoint.y;
+            gameClient.sendVoiceMessage(s.getBytes());
         }
 
         if (gameClient.getPlayerNumber() == PLAYER1) {

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
@@ -25,10 +26,13 @@ import java.nio.ByteOrder;
 public class WarpController implements MultiplayerController {
 
     Context context;
+    MyCallback androidCallback;
     GameClientInterface callback;
+
 
     public WarpController(Context context) {
         this.context = context;
+        androidCallback = (MyCallback) context;
     }
 
     public String getIpAddress() {
@@ -55,7 +59,6 @@ public class WarpController implements MultiplayerController {
     public void log(String message) { Log.d(TAG, message); }
 
     public void showNotification(String message) {
-
     }
 
     public boolean isConnectedToLocalNetwork() {
@@ -78,10 +81,16 @@ public class WarpController implements MultiplayerController {
 
     @Override
     public void transmit(byte[] message, int bufferSize) {
-        recorder.stop();
-
-        Thread t = new Thread(new SpeakerThread(message, bufferSize));
-        t.start();
+        if (speaker != null) {
+            speaker.flush();
+            speaker.play();
+            speaker.write(message, 0, bufferSize);
+            speaker.stop();
+//            speaker.flush();
+//            recorder.startRecording();
+//            Thread t = new Thread(new SpeakerThread(message, bufferSize));
+//            t.start();
+        }
     }
 
     final int maxBufferSize = 4096;
@@ -92,6 +101,14 @@ public class WarpController implements MultiplayerController {
     AudioRecord recorder;
     int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
     int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+
+    int minBufferSize = 0;
+    int recorderBufSize = 0;
+
+    @Override
+    public int getBufferSize() {
+        return Math.max(minBufferSize, recorderBufSize);
+    }
 
     public void getValidSampleRates() {
         for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
@@ -107,22 +124,36 @@ public class WarpController implements MultiplayerController {
         byte[] buffer;
 
         public void run() {
-                int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
-                int recorderBufSize = Math.max(minBufferSize, maxBufferSize);
-                buffer = new byte[recorderBufSize];
+            minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
+            recorderBufSize = Math.max(minBufferSize, maxBufferSize);
+            buffer = new byte[recorderBufSize];
 
             try {
-                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, recorderBufSize, AudioTrack.MODE_STREAM);
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,recordChannelConfig,audioFormat, recorderBufSize);
+                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,
+                        sampleRate,
+                        speakerChannelConfig,
+                        audioFormat,
+                        recorderBufSize,
+                        AudioTrack.MODE_STREAM);
+
+                recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        sampleRate,
+                        recordChannelConfig,
+                        audioFormat,
+                        recorderBufSize);
+
                 Log.d(TAG, "Recorder created");
 
                 recorder.startRecording();
+                Log.d(TAG, "Started recording");
+
                 speaker.play();
+//                Log.d(TAG, "Speaker playing");
 
                 while (callback.isConnected()) {
                     if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         recorderBufSize = recorder.read(buffer, 0, buffer.length);
-                        callback.sendMessage(buffer);
+                        callback.sendVoiceMessage(buffer);
                     }
                 }
             } catch (Throwable t) {
@@ -159,28 +190,28 @@ public class WarpController implements MultiplayerController {
         public void run() {
 //            if (speaker.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) return;
 
-            int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
+//            int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
 //            speaker.play();
-            speaker.write(buffer, 0, bufferSize);
-            recorder.startRecording();
+//            speaker.write(buffer, 0, bufferSize);
+//            recorder.startRecording();
 //            speaker.stop();
-            if (playing) return;
+//            if (playing) return;
 
-            playing = true;
+//            playing = true;
 
-            try {
-                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
-                Log.d(TAG, "Speaker initialised");
-                speaker.play();
-                speaker.write(buffer, 0, minBufSize);
+//            try {
+//                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
+//                Log.d(TAG, "Speaker initialised");
+//                speaker.play();
+                speaker.write(buffer, 0, bufferSize);
                 Log.d(TAG, "Writing to speaker");
-            } catch (Throwable t) {
-                Log.d(TAG, "Error: " + t.getMessage());
-            } finally {
-                speaker.release();
-                Log.d(TAG, "Released speaker");
-            }
-            playing = false;
+//            } catch (Throwable t) {
+//                Log.d(TAG, "Error: " + t.getMessage());
+//            } finally {
+//                speaker.release();
+//                Log.d(TAG, "Released speaker");
+//            }
+//            playing = false;
         }
     }
 }

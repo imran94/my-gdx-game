@@ -2,6 +2,8 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,10 +15,11 @@ import java.net.Socket;
 abstract public class GameClient implements GameClientInterface {
 
     static Socket socket;
+    static Socket voiceSocket;
+//    static DatagramSocket dgSocket;
 
     GameListener callback;
     String localAddress;
-    Thread receiveThread;
 
     public GameClient(GameListener callback, String localAddress) {
         this.callback = callback;
@@ -43,10 +46,13 @@ abstract public class GameClient implements GameClientInterface {
     }
 
     @Override
-    public void onDisconnected() {
+    public void disconnect() {
         try {
             socket.close();
-        } catch(IOException io) {}
+            voiceSocket.close();
+        } catch(IOException io) {
+            callback.getDeviceAPI().log("Unable to close socket. " + io.getMessage());
+        }
 
         callback.onDisconnected();
     }
@@ -68,9 +74,16 @@ abstract public class GameClient implements GameClientInterface {
     }
 
     @Override
-    public void sendMessage(byte[] message) {
-//        Thread t = new Thread(new MessageThread(message));
-//        t.start();
+    public void sendVoiceMessage(byte[] message) {
+        try {
+            DataOutputStream dos = new DataOutputStream(voiceSocket.getOutputStream());
+            dos.write(message, 0, message.length);
+            dos.flush();
+//            Gdx.app.log(MultiplayerController.TAG, "Packet sent to: " + packet.getAddress());
+
+        } catch (Exception e) {
+            Gdx.app.log(MultiplayerController.TAG, "Failed to send voice: " + e.toString());
+        }
     }
 
     protected class MessageThread implements Runnable {
@@ -102,11 +115,32 @@ abstract public class GameClient implements GameClientInterface {
 
                     callback.onMessageReceived(message);
                 } catch (Exception io) {
-                    Gdx.app.log(MultiplayerController.TAG, io.getMessage());
+                    Gdx.app.log(MultiplayerController.TAG, io.toString());
                 }
             }
 
-            onDisconnected();
+            disconnect();
+        }
+    }
+
+    protected class VoiceReceiveThread implements  Runnable {
+        public void run() {
+            Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread started");
+
+            callback.getDeviceAPI().startRecording();
+
+            while (isConnected()) {
+
+                try {
+                    byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
+
+                    DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
+                    dis.readFully(message);
+                    callback.getDeviceAPI().transmit(message, message.length);
+                } catch (IOException io) {
+                    Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread error: " + io.toString());
+                }
+            }
         }
     }
 }

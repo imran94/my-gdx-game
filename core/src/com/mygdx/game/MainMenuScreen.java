@@ -1,8 +1,10 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -23,25 +25,24 @@ import com.badlogic.gdx.utils.Timer;
  */
 public class MainMenuScreen implements Screen, GameListener {
 
-    Game game;
+    private Game game;
 
-    Rectangle createBounds, joinBounds, cancelBounds;
-    TextButton createButton, joinButton, cancelButton;
+    private Rectangle createBounds, joinBounds, cancelBounds;
+    private TextButton createButton, joinButton, cancelButton;
 
-    OrthographicCamera guiCam;
-    SpriteBatch batch;
-    Vector3 touchpoint;
+    private OrthographicCamera guiCam;
+    private SpriteBatch batch;
+    private Vector3 touchpoint;
 
-    BitmapFont font;
+    private BitmapFont font;
     public static String debugText = "";
 
-    Skin skin;
-    Stage stage, cancelStage;
-    boolean hideButtons;
+    private Skin skin;
+    private Stage stage, cancelStage;
+    private boolean hideButtons;
 
-    GameClientInterface gameClient;
-
-    MultiplayerController mController;
+    private GameClientInterface gameClient;
+    private MultiplayerController mController;
 
     public MainMenuScreen(Game game, MultiplayerController mController) {
         this.game = game;
@@ -99,15 +100,11 @@ public class MainMenuScreen implements Screen, GameListener {
         debugText = mController.getIpAddress();
     }
 
-    public void update() {
+    private void update() {
         if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
-            if (hideButtons) {
-                gameClient.cancel();
-                hideButtons = false;
-            } else {
-                Gdx.app.exit();
-            }
+            Gdx.app.exit();
         }
+
         if (Gdx.input.justTouched()) {
             guiCam.unproject(touchpoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 
@@ -142,7 +139,7 @@ public class MainMenuScreen implements Screen, GameListener {
         }
     }
 
-    public void draw() {
+    private void draw() {
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -165,13 +162,13 @@ public class MainMenuScreen implements Screen, GameListener {
         update();
     }
 
-    void createServer() {
+    private void createServer() {
         gameClient = new MyServer(this, mController.getIpAddress());
         Thread t = new Thread(gameClient);
         t.start();
     }
 
-    void runClient() {
+    private void runClient() {
         debugText = "Starting up client thread";
         gameClient = new MyClient(this, mController.getIpAddress());
         Thread t = new Thread(gameClient);
@@ -242,7 +239,9 @@ public class MainMenuScreen implements Screen, GameListener {
     public MultiplayerController getDeviceAPI() { return mController; }
 
     @Override public void show() {}
+
     @Override public void resize(int width, int height) {}
+
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}

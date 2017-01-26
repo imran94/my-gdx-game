@@ -10,6 +10,7 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
@@ -25,10 +26,13 @@ import java.nio.ByteOrder;
 public class WarpController implements MultiplayerController {
 
     Context context;
+    MyCallback androidCallback;
     GameClientInterface callback;
+
 
     public WarpController(Context context) {
         this.context = context;
+        androidCallback = (MyCallback) context;
     }
 
     public String getIpAddress() {
@@ -55,7 +59,6 @@ public class WarpController implements MultiplayerController {
     public void log(String message) { Log.d(TAG, message); }
 
     public void showNotification(String message) {
-
     }
 
     public boolean isConnectedToLocalNetwork() {
@@ -78,10 +81,13 @@ public class WarpController implements MultiplayerController {
 
     @Override
     public void transmit(byte[] message, int bufferSize) {
-        if (recorder != null && speaker != null) {
-            recorder.stop();
+        if (speaker != null) {
+            speaker.flush();
+            speaker.play();
             speaker.write(message, 0, bufferSize);
-            recorder.startRecording();
+            speaker.stop();
+//            speaker.flush();
+//            recorder.startRecording();
 //            Thread t = new Thread(new SpeakerThread(message, bufferSize));
 //            t.start();
         }
@@ -104,7 +110,6 @@ public class WarpController implements MultiplayerController {
         return Math.max(minBufferSize, recorderBufSize);
     }
 
-
     public void getValidSampleRates() {
         for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
             int bufferSize = AudioRecord.getMinBufferSize(rate, recordChannelConfig, audioFormat);
@@ -124,16 +129,26 @@ public class WarpController implements MultiplayerController {
             buffer = new byte[recorderBufSize];
 
             try {
-                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, recorderBufSize, AudioTrack.MODE_STREAM);
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,recordChannelConfig,audioFormat, recorderBufSize);
+                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,
+                        sampleRate,
+                        speakerChannelConfig,
+                        audioFormat,
+                        recorderBufSize,
+                        AudioTrack.MODE_STREAM);
+
+                recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        sampleRate,
+                        recordChannelConfig,
+                        audioFormat,
+                        recorderBufSize);
+
                 Log.d(TAG, "Recorder created");
 
                 recorder.startRecording();
                 Log.d(TAG, "Started recording");
 
                 speaker.play();
-                Log.d(TAG, "Speaker playing");
-
+//                Log.d(TAG, "Speaker playing");
 
                 while (callback.isConnected()) {
                     if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {

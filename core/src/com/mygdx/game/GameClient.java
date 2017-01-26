@@ -115,7 +115,7 @@ abstract public class GameClient implements GameClientInterface {
 
                     callback.onMessageReceived(message);
                 } catch (Exception io) {
-                    Gdx.app.log(MultiplayerController.TAG, io.getMessage());
+                    Gdx.app.log(MultiplayerController.TAG, io.toString());
                 }
             }
 
@@ -127,17 +127,16 @@ abstract public class GameClient implements GameClientInterface {
         public void run() {
             Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread started");
 
+            callback.getDeviceAPI().startRecording();
+
             while (isConnected()) {
-//                callback.getDeviceAPI().startRecording();
 
                 try {
                     byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
 
                     DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
                     dis.readFully(message);
-//                    callback.getDeviceAPI().transmit(message, message.length);
-
-                    Gdx.app.log(MultiplayerController.TAG, "Voice message received");
+                    callback.getDeviceAPI().transmit(message, message.length);
                 } catch (IOException io) {
                     Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread error: " + io.toString());
                 }

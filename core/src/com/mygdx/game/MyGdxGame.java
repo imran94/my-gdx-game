@@ -14,6 +14,9 @@ public class MyGdxGame extends Game implements ApplicationListener {
 
 	@Override
 	public void create () {
+//		Gdx.input.setInputProcessor(this);
+		Gdx.input.setCatchBackKey(true);
+
 		setScreen(new MainMenuScreen(this, mController));
 //		setScreen(new GameScreen(this, mController));
 	}
@@ -24,6 +27,5 @@ public class MyGdxGame extends Game implements ApplicationListener {
 	}
 
 	@Override
-	public void dispose () {
-	}
+	public void dispose () {}
 }

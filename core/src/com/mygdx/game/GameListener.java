@@ -20,5 +20,5 @@ public interface GameListener {
 
     void onMessageReceived(String message);
 
-    MultiplayerController getDeviceAPI();
+    DeviceAPI getDeviceAPI();
 }

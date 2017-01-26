@@ -2,13 +2,12 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
 
 public class MyGdxGame extends Game implements ApplicationListener {
 
-	private final MultiplayerController mController;
+	private final DeviceAPI mController;
 
-	public MyGdxGame(MultiplayerController mController) {
+	public MyGdxGame(DeviceAPI mController) {
 		this.mController = mController;
 	}
 

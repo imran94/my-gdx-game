@@ -24,7 +24,7 @@ import java.util.Map;
 public class GameScreen implements Screen, GameListener {
 
     private Game game;
-    private MultiplayerController mController;
+    private DeviceAPI mController;
     private GameClientInterface gameClient;
 
     private OrthographicCamera guiCam;
@@ -47,7 +47,7 @@ public class GameScreen implements Screen, GameListener {
 
     private boolean yDown;
 
-    public GameScreen(Game game, MultiplayerController mController) {
+    public GameScreen(Game game, DeviceAPI mController) {
         this.game = game;
         this.mController = mController;
         this.gameClient = new LameClient();
@@ -55,9 +55,10 @@ public class GameScreen implements Screen, GameListener {
         createGame();
     }
 
-    public GameScreen(Game game, MultiplayerController mController, GameClientInterface gameClient) {
+    public GameScreen(Game game, DeviceAPI mController, GameClientInterface gameClient) {
         this.game = game;
         this.mController = mController;
+
         this.gameClient = gameClient;
         this.gameClient.setListener(this);
 
@@ -113,13 +114,6 @@ public class GameScreen implements Screen, GameListener {
             scoreVerticalOffset = -scoreVerticalOffset;
         }
 
-//        player1.score = 10;
-//        player1.updateScore();
-//        player2.score = 20;
-//        player2.updateScore();
-//        setPlayer1ScorePosition();
-//        setPlayer2ScorePosition();
-
         touchPoint = new Vector3();
     }
 
@@ -127,18 +121,6 @@ public class GameScreen implements Screen, GameListener {
         this.gameClient = gameClient;
         this.gameClient.setListener(this);
     }
-
-    float x1 = Gdx.graphics.getWidth() / 2;
-    float x2 = Gdx.graphics.getWidth() / 2;
-
-    float y1 = 150;
-    float y2 = Gdx.graphics.getHeight() - 150;
-
-    float x3 = Gdx.graphics.getWidth() / 2;
-    float y3 = Gdx.graphics.getHeight() / 2;
-
-    float puckSpeedX = 0, puckSpeedY = 0;
-    int paddleMass = 10, puckMass = 1;
 
     @Override
     public void render(float delta) {
@@ -191,14 +173,13 @@ public class GameScreen implements Screen, GameListener {
     public void update() {
         if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
             gameClient.disconnect();
+            Gdx.app.exit();
         }
 
         puck.update();
 
         if (Gdx.input.isTouched()) {
             guiCam.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
-
-//            Gdx.app.log(MultiplayerController.TAG, "isTouched: " + touchPoint.x + ", " + touchPoint.y);
 
             if ((yDown && touchPoint.y <= SCREEN_HEIGHT / 2)
             || (!yDown && touchPoint.y >= SCREEN_HEIGHT / 2)) {
@@ -247,8 +228,7 @@ public class GameScreen implements Screen, GameListener {
 
     @Override
     public void onDisconnected() {
-//        mController.showNotification("Disconnected from game");
-//        game.setScreen(new MainMenuScreen(game, mController));
+
     }
 
     @Override
@@ -256,11 +236,7 @@ public class GameScreen implements Screen, GameListener {
 
     @Override
     public void onMessageReceived(String message) {
-//        Gdx.app.log(MultiplayerController.TAG, "onMessageReceived: " + message);
-
         String[] coords = message.split(",");
-
-//        Gdx.app.log(MultiplayerController.TAG, "Calibration after receiving: " + otherX + ", " + otherY);
 
         otherPlayer.update(SCREEN_WIDTH - Float.parseFloat(coords[0]) * SCREEN_WIDTH / GAME_WIDTH,
                 Float.parseFloat(coords[1]) * SCREEN_HEIGHT / GAME_HEIGHT);
@@ -276,7 +252,7 @@ public class GameScreen implements Screen, GameListener {
     }
 
     @Override
-    public MultiplayerController getDeviceAPI() {
+    public DeviceAPI getDeviceAPI() {
         return mController;
     }
 
@@ -467,7 +443,6 @@ public class GameScreen implements Screen, GameListener {
             score2 = spriteMap.get(score % 10);
         }
     }
-
 
     @Override public void show() {}
     @Override public void resize(int width, int height) {}

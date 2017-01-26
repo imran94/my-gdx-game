@@ -62,7 +62,7 @@ public class MyClient extends GameClient {
             try {
                 socket.close();
             } catch (IOException io) {
-                Gdx.app.log(MultiplayerController.TAG, "Failed to close socket: " + io.toString());
+                Gdx.app.log(DeviceAPI.TAG, "Failed to close socket: " + io.toString());
             }
         }
 

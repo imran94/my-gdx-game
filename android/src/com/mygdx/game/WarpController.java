@@ -10,10 +10,6 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -23,12 +19,11 @@ import java.nio.ByteOrder;
 /**
  * Created by Administrator on 04-Nov-16.
  */
-public class WarpController implements MultiplayerController {
+public class WarpController implements DeviceAPI {
 
-    Context context;
-    MyCallback androidCallback;
-    GameClientInterface callback;
-
+    private Context context;
+    private MyCallback androidCallback;
+    private GameClientInterface callback;
 
     public WarpController(Context context) {
         this.context = context;
@@ -93,17 +88,17 @@ public class WarpController implements MultiplayerController {
         }
     }
 
-    final int maxBufferSize = 4096;
-    final int sampleRate = 8000;
-    final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+    private final int maxBufferSize = 4096;
+    private final int sampleRate = 8000;
+    private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
-    AudioTrack speaker;
-    AudioRecord recorder;
-    int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
-    int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+    private AudioTrack speaker;
+    private AudioRecord recorder;
+    private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
+    private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
 
-    int minBufferSize = 0;
-    int recorderBufSize = 0;
+    private int minBufferSize = 0;
+    private int recorderBufSize = 0;
 
     @Override
     public int getBufferSize() {
@@ -165,53 +160,15 @@ public class WarpController implements MultiplayerController {
                 }
 
                 if (speaker != null) {
-                    speaker.stop();
+                    try {
+                        speaker.stop();
+                    } catch (Exception e) {}
+
                     speaker.flush();
                     speaker.release();
                     Log.d(TAG, "Speaker released");
                 }
             }
-        }
-    }
-
-    boolean playing = false;
-
-    private class SpeakerThread implements Runnable {
-
-        byte[] buffer;
-        int bufferSize;
-//        AudioTrack speaker;
-
-        public SpeakerThread(byte[] buffer, int bufferSize) {
-            this.buffer = buffer;
-            this.bufferSize = bufferSize;
-        }
-
-        public void run() {
-//            if (speaker.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) return;
-
-//            int minBufSize = AudioTrack.getMinBufferSize(sampleRate, speakerChannelConfig, audioFormat);
-//            speaker.play();
-//            speaker.write(buffer, 0, bufferSize);
-//            recorder.startRecording();
-//            speaker.stop();
-//            if (playing) return;
-
-//            playing = true;
-
-//            try {
-//                speaker = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, speakerChannelConfig, audioFormat, minBufSize, AudioTrack.MODE_STREAM);
-//                Log.d(TAG, "Speaker initialised");
-//                speaker.play();
-                speaker.write(buffer, 0, bufferSize);
-                Log.d(TAG, "Writing to speaker");
-//            } catch (Throwable t) {
-//                Log.d(TAG, "Error: " + t.getMessage());
-//            } finally {
-//                speaker.release();
-//                Log.d(TAG, "Released speaker");
-//            }
-//            playing = false;
         }
     }
 }

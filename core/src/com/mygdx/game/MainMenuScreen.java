@@ -42,9 +42,9 @@ public class MainMenuScreen implements Screen, GameListener {
     private boolean hideButtons;
 
     private GameClientInterface gameClient;
-    private MultiplayerController mController;
+    private DeviceAPI mController;
 
-    public MainMenuScreen(Game game, MultiplayerController mController) {
+    public MainMenuScreen(Game game, DeviceAPI mController) {
         this.game = game;
         batch = new SpriteBatch();
 
@@ -236,7 +236,7 @@ public class MainMenuScreen implements Screen, GameListener {
 
     public void appendText(String text) { debugText += "\n" + text; }
 
-    public MultiplayerController getDeviceAPI() { return mController; }
+    public DeviceAPI getDeviceAPI() { return mController; }
 
     @Override public void show() {}
 

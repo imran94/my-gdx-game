@@ -33,7 +33,7 @@ public class MyServer extends GameClient {
             Thread t2 = new Thread(new VoiceServerThread());
             t2.start();
         } catch (IOException io) {
-            Gdx.app.log(MultiplayerController.TAG, "Failed to create a server: " + io.toString());
+            Gdx.app.log(DeviceAPI.TAG, "Failed to create a server: " + io.toString());
             MainMenuScreen.debugText = "Failed to create a server:\n " + io.getMessage();
             callback.onConnectionFailed();
         }
@@ -70,7 +70,7 @@ public class MyServer extends GameClient {
 
                 voiceServer.close();
             } catch (Exception io) {
-                Gdx.app.log(MultiplayerController.TAG, "VoiceServer exception: " + io.toString());
+                Gdx.app.log(DeviceAPI.TAG, "VoiceServer exception: " + io.toString());
                 try {
                     voiceServer.close();
                 } catch (Exception e) {}
@@ -84,7 +84,7 @@ public class MyServer extends GameClient {
             serverSocket.close();
             voiceServer.close();
         } catch (IOException io) {
-            Gdx.app.log(MultiplayerController.TAG, "Failed to close server: " + io.toString());
+            Gdx.app.log(DeviceAPI.TAG, "Failed to close server: " + io.toString());
         }
     }
 

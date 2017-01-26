@@ -69,7 +69,7 @@ abstract public class GameClient implements GameClientInterface {
             oos.writeUTF(message);
             oos.flush();
         } catch (IOException io) {
-            Gdx.app.log(MultiplayerController.TAG, "Failed to send message");
+            Gdx.app.log(DeviceAPI.TAG, "Failed to send message");
         }
     }
 
@@ -79,10 +79,10 @@ abstract public class GameClient implements GameClientInterface {
             DataOutputStream dos = new DataOutputStream(voiceSocket.getOutputStream());
             dos.write(message, 0, message.length);
             dos.flush();
-//            Gdx.app.log(MultiplayerController.TAG, "Packet sent to: " + packet.getAddress());
+//            Gdx.app.log(DeviceAPI.TAG, "Packet sent to: " + packet.getAddress());
 
         } catch (Exception e) {
-            Gdx.app.log(MultiplayerController.TAG, "Failed to send voice: " + e.toString());
+            Gdx.app.log(DeviceAPI.TAG, "Failed to send voice: " + e.toString());
         }
     }
 
@@ -99,9 +99,9 @@ abstract public class GameClient implements GameClientInterface {
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeUTF(message);
                 oos.flush();
-                Gdx.app.log(MultiplayerController.TAG, "Message sent");
+                Gdx.app.log(DeviceAPI.TAG, "Message sent");
             } catch (IOException io) {
-                Gdx.app.log(MultiplayerController.TAG, "Failed to send message");
+                Gdx.app.log(DeviceAPI.TAG, "Failed to send message");
             }
         }
     }
@@ -115,7 +115,7 @@ abstract public class GameClient implements GameClientInterface {
 
                     callback.onMessageReceived(message);
                 } catch (Exception io) {
-                    Gdx.app.log(MultiplayerController.TAG, io.toString());
+                    Gdx.app.log(DeviceAPI.TAG, io.toString());
                 }
             }
 
@@ -125,7 +125,7 @@ abstract public class GameClient implements GameClientInterface {
 
     protected class VoiceReceiveThread implements  Runnable {
         public void run() {
-            Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread started");
+            Gdx.app.log(DeviceAPI.TAG, "voiceReceiveThread started");
 
             callback.getDeviceAPI().startRecording();
 
@@ -138,7 +138,7 @@ abstract public class GameClient implements GameClientInterface {
                     dis.readFully(message);
                     callback.getDeviceAPI().transmit(message, message.length);
                 } catch (IOException io) {
-                    Gdx.app.log(MultiplayerController.TAG, "voiceReceiveThread error: " + io.toString());
+                    Gdx.app.log(DeviceAPI.TAG, "voiceReceiveThread error: " + io.toString());
                 }
             }
         }

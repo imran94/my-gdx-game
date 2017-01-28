@@ -11,8 +11,7 @@ import java.net.Socket;
  */
 public class MyServer extends GameClient {
 
-    private static ServerSocket serverSocket;
-    private static ServerSocket voiceServer;
+    private static ServerSocket serverSocket, voiceServer;
 
     public MyServer(GameListener callback, String localAddress) {
         super(callback, localAddress);
@@ -22,6 +21,19 @@ public class MyServer extends GameClient {
     public void run() {
         try {
             MainMenuScreen.debugText = "Creating server on port no. " + GameClient.port + "\n";
+
+            try {
+                socket.close();
+            } catch (Exception e) {}
+            try {
+                voiceSocket.close();
+            } catch (Exception e) {}
+            try {
+                serverSocket.close();
+            } catch (Exception e) {}
+            try {
+                voiceServer.close();
+            } catch (Exception e) {}
 
             serverSocket = new ServerSocket(port);
             voiceServer = new ServerSocket(voicePort);

@@ -102,6 +102,13 @@ public class MainMenuScreen implements Screen, GameListener {
 
     private void update() {
         if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+            if (gameClient != null) {
+                if (gameClient.isConnected()) {
+                    gameClient.disconnect();
+                } else {
+                    gameClient.cancel();
+                }
+            }
             Gdx.app.exit();
         }
 
@@ -209,7 +216,7 @@ public class MainMenuScreen implements Screen, GameListener {
                 game.setScreen(new GameScreen(game, mController, gameClient));
                 Gdx.app.log(mController.TAG, "GameScreen set");
             }
-        }, 2.0f);
+        }, 0.2f);
     }
 
     @Override

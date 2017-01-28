@@ -20,6 +20,11 @@ public class MyClient extends GameClient {
 
     @Override
     public void run() {
+        try {
+            socket.close();
+            voiceSocket.close();
+        } catch (Exception e) {}
+
         int bitCount = 254;
 
         pool = Executors.newFixedThreadPool(bitCount);

@@ -207,14 +207,13 @@ public class MainMenuScreen implements Screen, GameListener {
     @Override
     public void onConnected() {
         debugText = "Connected to socket";
+        mController.showNotification("Player found");
         mController.setCallback(gameClient);
 
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
-                Gdx.app.log(mController.TAG, "Timer started");
                 game.setScreen(new GameScreen(game, mController, gameClient));
-                Gdx.app.log(mController.TAG, "GameScreen set");
             }
         }, 0.2f);
     }
@@ -226,8 +225,7 @@ public class MainMenuScreen implements Screen, GameListener {
     @Override
     public void onDisconnected() {
         debugText = "Disconnected";
-        mController.log("Disconnected");
-//        mController.showNotification("Lost connection with other player");
+        mController.showNotification("Lost connection with other player");
 
         hideButtons = false;
     }
@@ -235,8 +233,8 @@ public class MainMenuScreen implements Screen, GameListener {
     @Override
     public void onConnectionFailed() {
         debugText = "Failed to find a connection";
-        Gdx.app.log(mController.TAG, "Failed to find a connection");
-        mController.log("Failed to find a connection");
+        Gdx.app.log(mController.TAG, "Failed to find a game");
+
         hideButtons = false;
 //        mController.showNotification("Failed to find a game. Try again.");
     }
@@ -249,8 +247,12 @@ public class MainMenuScreen implements Screen, GameListener {
 
     @Override public void resize(int width, int height) {}
 
-    @Override public void pause() {}
-    @Override public void resume() {}
+    @Override public void pause() {
+        Gdx.app.log(DeviceAPI.TAG, "Paused");
+    }
+    @Override public void resume() {
+        Gdx.app.log(DeviceAPI.TAG, "Paused");
+    }
     @Override public void hide() {}
     @Override public void dispose() {}
 }

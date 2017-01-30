@@ -51,9 +51,8 @@ public class WarpController implements DeviceAPI {
         return ipAddress;
     }
 
-    public void log(String message) { Log.d(TAG, message); }
-
     public void showNotification(String message) {
+        androidCallback.showNotification(message);
     }
 
     public boolean isConnectedToLocalNetwork() {

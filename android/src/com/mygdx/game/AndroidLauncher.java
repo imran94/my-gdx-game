@@ -22,7 +22,13 @@ public class AndroidLauncher extends AndroidApplication implements MyCallback {
 	}
 
 	@Override
-	public void showNotification(String message) {
-		Toast.makeText(this, message, Toast.LENGTH_SHORT);
+	public void showNotification(final String message) {
+		handler.post(new Runnable()
+		{
+			@Override
+			public void run() {
+				Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
 }

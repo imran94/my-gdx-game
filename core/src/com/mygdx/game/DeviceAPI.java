@@ -10,7 +10,6 @@ public interface DeviceAPI {
     String getIpAddress();
     boolean isConnectedToLocalNetwork();
 
-    void log(String message);
     void showNotification(String message);
     void startRecording();
     void setCallback(GameClientInterface callback);

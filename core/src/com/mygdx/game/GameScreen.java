@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -82,11 +83,6 @@ public class GameScreen implements Screen, GameListener {
         spriteMap = new HashMap<Integer, Sprite>();
         for (int i = 0; i < 10; i++) {
             Sprite sprite = new Sprite(new Texture(i + ".png"));
-
-            String s = i + ", " + "Width: " + sprite.getWidth() +
-                    ", height: " + sprite.getHeight();
-
-            sprite.setSize(sprite.getWidth(), sprite.getHeight());
             spriteMap.put(i, sprite);
         }
 
@@ -226,7 +222,14 @@ public class GameScreen implements Screen, GameListener {
 
     @Override
     public void onDisconnected() {
-
+        gameClient.disconnect();
+        Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                game.setScreen(new MainMenuScreen(game, mController));
+                mController.showNotification("Disconnected from other player");
+            }
+        }, 0.2f);
     }
 
     @Override

@@ -240,7 +240,7 @@ public class MainMenuScreen implements Screen, GameListener {
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
-                game.setScreen(new GameScreen(game, mController, gameClient));
+            game.setScreen(new GameScreen(game, mController, gameClient));
             }
         }, 0.2f);
     }

@@ -14,9 +14,7 @@ import java.net.Socket;
  */
 abstract public class GameClient implements GameClientInterface {
 
-    static Socket socket;
-    static Socket voiceSocket;
-//    static DatagramSocket dgSocket;
+    static Socket socket, voiceSocket;
 
     GameListener callback;
     String localAddress;
@@ -47,13 +45,11 @@ abstract public class GameClient implements GameClientInterface {
 
     @Override
     public void disconnect() {
+        sendMessage("Disconnect");
         try {
             socket.close();
             voiceSocket.close();
-        } catch(IOException io) {
-        }
-
-        callback.onDisconnected();
+        } catch(IOException io) {}
     }
 
     @Override
@@ -112,9 +108,15 @@ abstract public class GameClient implements GameClientInterface {
                     ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
                     String message = ois.readUTF();
 
-                    callback.onMessageReceived(message);
+                    if (message.equals("Disconnect")) {
+                        callback.onDisconnected();
+                        break;
+                    } else {
+                        callback.onMessageReceived(message);
+                    }
                 } catch (Exception io) {
-                    Gdx.app.log(DeviceAPI.TAG, io.toString());
+//                    Gdx.app.log(DeviceAPI.TAG, "Disconnected");
+//                    callback.onDisconnected();
                 }
             }
 
@@ -127,17 +129,15 @@ abstract public class GameClient implements GameClientInterface {
             Gdx.app.log(DeviceAPI.TAG, "voiceReceiveThread started");
 
             callback.getDeviceAPI().startRecording();
+            byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
 
             while (isConnected()) {
-
                 try {
-                    byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
 
                     DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
                     dis.readFully(message);
                     callback.getDeviceAPI().transmit(message, message.length);
                 } catch (IOException io) {
-                    Gdx.app.log(DeviceAPI.TAG, "voiceReceiveThread error: " + io.toString());
                 }
             }
         }

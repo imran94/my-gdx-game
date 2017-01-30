@@ -51,7 +51,6 @@ abstract public class GameClient implements GameClientInterface {
             socket.close();
             voiceSocket.close();
         } catch(IOException io) {
-            callback.getDeviceAPI().log("Unable to close socket. " + io.getMessage());
         }
 
         callback.onDisconnected();

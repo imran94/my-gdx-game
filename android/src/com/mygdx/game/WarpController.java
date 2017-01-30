@@ -15,6 +15,8 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Administrator on 04-Nov-16.
@@ -88,7 +90,7 @@ public class WarpController implements DeviceAPI {
     }
 
     private final int maxBufferSize = 4096;
-    private final int sampleRate = 8000;
+    private final int sampleRate = 11025;
     private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
     private AudioTrack speaker;
@@ -104,13 +106,17 @@ public class WarpController implements DeviceAPI {
         return Math.max(minBufferSize, recorderBufSize);
     }
 
-    public void getValidSampleRates() {
+    public List<Integer> getValidSampleRates() {
+        List<Integer> list = new ArrayList<>();
         for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
             int bufferSize = AudioRecord.getMinBufferSize(rate, recordChannelConfig, audioFormat);
             if (bufferSize > 0) {
                 Log.d(TAG, rate  + " is supported");
+                list.add(rate);
             }
         }
+
+        return list;
     }
 
     private class StreamThread implements Runnable {

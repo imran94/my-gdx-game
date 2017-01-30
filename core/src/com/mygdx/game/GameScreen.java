@@ -85,10 +85,8 @@ public class GameScreen implements Screen, GameListener {
 
             String s = i + ", " + "Width: " + sprite.getWidth() +
                     ", height: " + sprite.getHeight();
-            Gdx.app.log(mController.TAG, s);
 
-            sprite.setSize(sprite.getWidth()/* * SCREEN_WIDTH / GAME_WIDTH*/,
-                    sprite.getHeight() /* SCREEN_HEIGHT / GAME_HEIGHT*/);
+            sprite.setSize(sprite.getWidth(), sprite.getHeight());
             spriteMap.put(i, sprite);
         }
 

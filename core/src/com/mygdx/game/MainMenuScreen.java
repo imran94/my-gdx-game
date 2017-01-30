@@ -20,6 +20,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Timer;
 
+import java.util.List;
+
 /**
  * Created by Administrator on 07-Nov-16.
  */
@@ -27,8 +29,8 @@ public class MainMenuScreen implements Screen, GameListener {
 
     private Game game;
 
-    private Rectangle createBounds, joinBounds, cancelBounds;
-    private TextButton createButton, joinButton, cancelButton;
+    private Rectangle createBounds, joinBounds, cancelBounds, quitBounds;
+    private TextButton createButton, joinButton, cancelButton, quitButton;
 
     private OrthographicCamera guiCam;
     private SpriteBatch batch;
@@ -44,6 +46,8 @@ public class MainMenuScreen implements Screen, GameListener {
     private GameClientInterface gameClient;
     private DeviceAPI mController;
 
+    private int SCREEN_WIDTH, SCREEN_HEIGHT;
+
     public MainMenuScreen(Game game, DeviceAPI mController) {
         this.game = game;
         batch = new SpriteBatch();
@@ -53,39 +57,51 @@ public class MainMenuScreen implements Screen, GameListener {
         guiCam.position.set(0, 0, 0);
         batch.setProjectionMatrix(guiCam.combined);
 
+        SCREEN_WIDTH = Gdx.graphics.getWidth();
+        SCREEN_HEIGHT = Gdx.graphics.getHeight();
+
         createBasicSkin();
 
-        float scaleX = 0.5f * Gdx.graphics.getWidth() / GAME_WIDTH;
-        float scaleY = 0.5f * Gdx.graphics.getHeight() / GAME_HEIGHT;
+        float scaleX = 0.5f * SCREEN_WIDTH / GAME_WIDTH;
+        float scaleY = 0.5f * SCREEN_HEIGHT / GAME_HEIGHT;
 
         createButton = new TextButton("Create Game", skin);
-        createButton.setPosition(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2 - createButton.getHeight());
+        createButton.setPosition(SCREEN_WIDTH / 2 - createButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 - createButton.getHeight());
         createButton.getLabel().setFontScale(scaleX, scaleY);
 
         joinButton = new TextButton("Join Game", skin);
-        joinButton.setPosition(Gdx.graphics.getWidth() / 2 - joinButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2 + joinButton.getHeight());
+        joinButton.setPosition(SCREEN_WIDTH / 2 - joinButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 + joinButton.getHeight());
         joinButton.getLabel().setFontScale(scaleX, scaleY);
 
-        createBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - createButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2 - createButton.getHeight(),
+        quitButton = new TextButton("Quit", skin);
+        quitButton.setPosition(SCREEN_WIDTH / 2 - quitButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 - quitButton.getHeight() * 3);
+        quitButton.getLabel().setFontScale(scaleX, scaleY);
+
+        createBounds = new Rectangle(SCREEN_WIDTH / 2 - createButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 - createButton.getHeight(),
                 createButton.getWidth(), createButton.getHeight());
-        joinBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - joinButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2 + joinButton.getHeight(),
-                joinButton.getWidth(), joinButton.getWidth());
+        joinBounds = new Rectangle(SCREEN_WIDTH / 2 - joinButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 + joinButton.getHeight(),
+                joinButton.getWidth(), joinButton.getHeight());
+        quitBounds = new Rectangle(SCREEN_WIDTH / 2 - quitButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2 - quitButton.getHeight() * 3,
+                quitButton.getWidth(), quitButton.getHeight());
 
         stage = new Stage();
         stage.addActor(createButton);
         stage.addActor(joinButton);
+        stage.addActor(quitButton);
 
         cancelButton = new TextButton("Cancel", skin);
-        cancelButton.setPosition(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2);
+        cancelButton.setPosition(SCREEN_WIDTH / 2 - cancelButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2);
         cancelButton.getLabel().setFontScale(scaleX, scaleY);
 
-        cancelBounds = new Rectangle(Gdx.graphics.getWidth() / 2 - cancelButton.getWidth() / 2,
-                Gdx.graphics.getHeight() / 2,
+        cancelBounds = new Rectangle(SCREEN_WIDTH / 2 - cancelButton.getWidth() / 2,
+                SCREEN_HEIGHT / 2,
                 cancelButton.getWidth(), cancelButton.getHeight());
 
         cancelStage = new Stage();
@@ -121,7 +137,7 @@ public class MainMenuScreen implements Screen, GameListener {
                         hideButtons = true;
                         createServer();
                     } else {
-                        //                    mController.showNotification("Not connected to a network.");
+                        mController.showNotification("Not connected to a network.");
                         Gdx.app.log("mygdxgame", "Not connected to a network");
                         debugText = "Not connected to a network";
                     }
@@ -132,10 +148,21 @@ public class MainMenuScreen implements Screen, GameListener {
                         hideButtons = true;
                         runClient();
                     } else {
-                        //                    mController.showNotification("Not connected to a network.");
+                        mController.showNotification("Not connected to a network.");
                         Gdx.app.log("mygdxgame", "Not connected to a network");
                         debugText = "Not connected to a network";
                     }
+                }
+
+                if (quitBounds.contains(touchpoint.x, touchpoint.y)) {
+                    if (gameClient != null) {
+                        if (gameClient.isConnected()) {
+                            gameClient.disconnect();
+                        } else {
+                            gameClient.cancel();
+                        }
+                    }
+                    Gdx.app.exit();
                 }
             } else {
                 if (cancelBounds.contains(touchpoint.x, touchpoint.y)) {
@@ -189,7 +216,7 @@ public class MainMenuScreen implements Screen, GameListener {
         skin.add("default", font);
 
         //Create a texture
-        Pixmap pixmap = new Pixmap((int)Gdx.graphics.getWidth()/4,(int)Gdx.graphics.getHeight()/10, Pixmap.Format.RGB888);
+        Pixmap pixmap = new Pixmap((int)SCREEN_WIDTH/4,(int)SCREEN_HEIGHT/10, Pixmap.Format.RGB888);
         pixmap.setColor(Color.WHITE);
         pixmap.fill();
         skin.add("background",new Texture(pixmap));

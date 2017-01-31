@@ -27,18 +27,11 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 
 	private GameClientInterface callback;
 
-	private int audioSource;
-	private final int maxBufferSize = 4096;
-	private final int sampleRate = 8000;
-	private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-
 	private AudioTrack speaker;
 	private AudioRecord recorder;
-	private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
-	private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
 
 	private int minBufferSize = 0;
-	private int recorderBufSize = 4096;
+	private final int maxBufferSize = 4096;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -47,11 +40,6 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 
 		Log.d(TAG, "API Level: " + Build.VERSION.SDK_INT);
 
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB) {
-			audioSource = MediaRecorder.AudioSource.VOICE_COMMUNICATION;
-		} else {
-			audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION;
-		}
 		initialize(new MyGdxGame(this), config);
 	}
 
@@ -113,21 +101,21 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 
 	@Override
 	public int getBufferSize() {
-		return Math.max(minBufferSize, recorderBufSize);
+		return Math.max(minBufferSize, maxBufferSize);
 	}
 
-	public List<Integer> getValidSampleRates() {
-		List<Integer> list = new ArrayList<>();
-		for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
-			int bufferSize = AudioRecord.getMinBufferSize(rate, recordChannelConfig, audioFormat);
-			if (bufferSize > 0) {
-				Log.d(TAG, rate  + " is supported");
-				list.add(rate);
-			}
-		}
+//	public List<Integer> getValidSampleRates() {
+//		List<Integer> list = new ArrayList<>();
+//		for (int rate : new int[] {8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
+//			int bufferSize = AudioRecord.getMinBufferSize(rate, recordChannelConfig, audioFormat);
+//			if (bufferSize > 0) {
+//				Log.d(TAG, rate  + " is supported");
+//				list.add(rate);
+//			}
+//		}
 
-		return list;
-	}
+//		return list;
+//	}
 
 	private boolean updated = false;
 	private byte[] message;
@@ -148,12 +136,24 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 
 	private class StreamThread implements Runnable {
 
-		byte[] buffer;
-
+		@Override
 		public void run() {
+			int audioSource;
+			final int sampleRate = 8000;
+			final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+			int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
+			int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+
 			minBufferSize = AudioRecord.getMinBufferSize(sampleRate, recordChannelConfig, audioFormat);
-			recorderBufSize = Math.max(minBufferSize, maxBufferSize);
-			buffer = new byte[recorderBufSize];
+			int recorderBufSize = Math.max(minBufferSize, maxBufferSize);
+			byte[] buffer = new byte[recorderBufSize];
+
+			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB) {
+				audioSource = MediaRecorder.AudioSource.VOICE_COMMUNICATION;
+			} else {
+				audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+			}
 
 			try {
 				speaker = new AudioTrack(AudioManager.STREAM_MUSIC,

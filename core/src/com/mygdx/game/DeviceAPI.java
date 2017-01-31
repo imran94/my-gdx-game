@@ -16,7 +16,7 @@ public interface DeviceAPI {
     void startRecording();
     void setCallback(GameClientInterface callback);
     void transmit(byte[] message);
-    List<Integer> getValidSampleRates();
+//    List<Integer> getValidSampleRates();
 
     int getBufferSize();
 }

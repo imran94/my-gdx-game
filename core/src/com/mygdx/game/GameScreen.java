@@ -171,7 +171,8 @@ public class GameScreen implements Screen, GameListener {
             Gdx.app.exit();
         }
 
-        puck.update();
+        if (gameClient.getPlayerNumber() == PLAYER1)
+            puck.update();
 
         if (Gdx.input.isTouched()) {
             guiCam.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
@@ -201,8 +202,10 @@ public class GameScreen implements Screen, GameListener {
             );
         }
 
-        checkCollision(myPlayer, puck);
-        checkCollision(otherPlayer, puck);
+        if (gameClient.getPlayerNumber() == PLAYER1) {
+            checkCollision(myPlayer, puck);
+            checkCollision(otherPlayer, puck);
+        }
     }
 
     public void checkCollision(Player player, Puck puck) {

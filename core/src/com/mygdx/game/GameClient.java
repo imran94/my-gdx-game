@@ -128,7 +128,7 @@ abstract public class GameClient implements GameClientInterface {
         public void run() {
             Gdx.app.log(DeviceAPI.TAG, "voiceReceiveThread started");
 
-            callback.getDeviceAPI().startRecording();
+//            callback.getDeviceAPI().startRecording();
 
             while (isConnected()) {
                 try {
@@ -136,7 +136,7 @@ abstract public class GameClient implements GameClientInterface {
 
                     DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
                     dis.read(message);
-                    callback.getDeviceAPI().transmit(message);
+//                    callback.getDeviceAPI().transmit(message);
                 } catch (IOException io) {}
             }
         }

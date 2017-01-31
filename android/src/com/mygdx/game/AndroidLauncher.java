@@ -8,6 +8,7 @@ import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -23,13 +24,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
+
 	private GameClientInterface callback;
+
+	private int audioSource;
+	private final int maxBufferSize = 4096;
+	private final int sampleRate = 8000;
+	private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+	private AudioTrack speaker;
+	private AudioRecord recorder;
+	private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
+	private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+
+	private int minBufferSize = 0;
+	private int recorderBufSize = 4096;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 
+		Log.d(TAG, "API Level: " + Build.VERSION.SDK_INT);
+
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB) {
+			audioSource = MediaRecorder.AudioSource.VOICE_COMMUNICATION;
+		} else {
+			audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+		}
 		initialize(new MyGdxGame(this), config);
 	}
 
@@ -84,30 +106,10 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 	}
 
 	@Override
-	public void transmit(byte[] message, int bufferSize) {
-		if (speaker != null) {
-			speaker.flush();
-			speaker.play();
-			speaker.write(message, 0, bufferSize);
-			speaker.stop();
-//            speaker.flush();
-//            recorder.startRecording();
-//            Thread t = new Thread(new SpeakerThread(message, bufferSize));
-//            t.start();
-		}
+	public void transmit(byte[] message) {
+		this.message = message;
+		updated = true;
 	}
-
-	private final int maxBufferSize = 4096;
-	private final int sampleRate = 44100;
-	private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-
-	private AudioTrack speaker;
-	private AudioRecord recorder;
-	private int speakerChannelConfig = AudioFormat.CHANNEL_OUT_MONO;
-	private int recordChannelConfig = AudioFormat.CHANNEL_IN_MONO;
-
-	private int minBufferSize = 0;
-	private int recorderBufSize = 0;
 
 	@Override
 	public int getBufferSize() {
@@ -127,6 +129,23 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 		return list;
 	}
 
+	private boolean updated = false;
+	private byte[] message;
+
+	private class SpeakerThread implements Runnable {
+		@Override
+		public void run() {
+			speaker.play();
+
+			while (callback.isConnected()) {
+				if (updated) {
+					speaker.write(message, 0, message.length);
+					updated = false;
+				}
+			}
+		}
+	}
+
 	private class StreamThread implements Runnable {
 
 		byte[] buffer;
@@ -144,7 +163,7 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 						recorderBufSize,
 						AudioTrack.MODE_STREAM);
 
-				recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+				recorder = new AudioRecord(audioSource,
 						sampleRate,
 						recordChannelConfig,
 						audioFormat,
@@ -155,7 +174,8 @@ public class AndroidLauncher extends AndroidApplication implements DeviceAPI {
 				recorder.startRecording();
 				Log.d(TAG, "Started recording");
 
-				speaker.play();
+				Thread t = new Thread(new SpeakerThread());
+				t.start();
 //                Log.d(TAG, "Speaker playing");
 
 				while (callback.isConnected()) {

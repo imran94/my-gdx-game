@@ -135,10 +135,9 @@ abstract public class GameClient implements GameClientInterface {
                     byte[] message = new byte[callback.getDeviceAPI().getBufferSize()];
 
                     DataInputStream dis = new DataInputStream(voiceSocket.getInputStream());
-                    dis.readFully(message);
-                    callback.getDeviceAPI().transmit(message, message.length);
-                } catch (IOException io) {
-                }
+                    dis.read(message);
+                    callback.getDeviceAPI().transmit(message);
+                } catch (IOException io) {}
             }
         }
     }

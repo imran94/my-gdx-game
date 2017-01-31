@@ -237,12 +237,18 @@ public class MainMenuScreen implements Screen, GameListener {
         mController.showNotification("Player found");
         mController.setCallback(gameClient);
 
+        Gdx.app.log(DeviceAPI.TAG, "Setting timer");
+
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
+                Gdx.app.log(DeviceAPI.TAG, "Setting screen");
             game.setScreen(new GameScreen(game, mController, gameClient));
+                Gdx.app.log(DeviceAPI.TAG, "Screen set");
             }
         }, 0.2f);
+        Gdx.app.log(DeviceAPI.TAG, "Timer set");
+
     }
 
     @Override

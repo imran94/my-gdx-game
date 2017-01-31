@@ -83,6 +83,7 @@ public class GameScreen implements Screen, GameListener {
         spriteMap = new HashMap<Integer, Sprite>();
         for (int i = 0; i < 10; i++) {
             Sprite sprite = new Sprite(new Texture(i + ".png"));
+            sprite.setSize(sprite.getWidth(), sprite.getHeight());
             spriteMap.put(i, sprite);
         }
 

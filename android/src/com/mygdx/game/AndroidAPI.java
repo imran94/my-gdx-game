@@ -21,13 +21,13 @@ import java.util.List;
 /**
  * Created by Administrator on 04-Nov-16.
  */
-public class WarpController implements DeviceAPI {
+public class AndroidAPI implements DeviceAPI {
 
     private Context context;
     private MyCallback androidCallback;
     private GameClientInterface callback;
 
-    public WarpController(Context context) {
+    public AndroidAPI(Context context) {
         this.context = context;
         androidCallback = (MyCallback) context;
     }
@@ -90,7 +90,7 @@ public class WarpController implements DeviceAPI {
     }
 
     private final int maxBufferSize = 4096;
-    private final int sampleRate = 11025;
+    private final int sampleRate = 44100;
     private final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
     private AudioTrack speaker;
